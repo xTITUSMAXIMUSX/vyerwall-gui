@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-.env
+.venv/
 instance/
 *.db
 lib/
@@ -8,3 +8,4 @@ migrations/
 bin/
 include/
 pyvenv.cfg
+lib64/
