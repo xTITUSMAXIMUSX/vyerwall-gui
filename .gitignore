@@ -8,4 +8,4 @@ migrations/
 bin/
 include/
 pyvenv.cfg
-lib64/
+lib64
