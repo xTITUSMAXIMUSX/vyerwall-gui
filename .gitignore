@@ -9,3 +9,4 @@ bin/
 include/
 pyvenv.cfg
 lib64
+var/
