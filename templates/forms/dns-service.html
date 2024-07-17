@@ -1,0 +1,120 @@
+{% extends 'layouts/main.html' %}
+{% block title %}DHCP Server{% endblock %}
+{% block content %}
+<div class="container">
+  <ul class="nav nav-tabs">
+    {% if dns_data.listenaddress == '' %}
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createDNSServer">
+      Create DNS
+    </button>
+    {% endif %}
+  </ul>
+
+  {% if dns_data.listenaddress != '' %}
+  <div class="tab-content">
+    <div class="tab-pane fade show active"
+      id="dns">
+      <div class="mb-2 row">
+        <label for="cachesize" class="col-sm-2 col-form-label">Cache Size:</label>
+        <div class="col-sm-2">
+          <input type="text" readonly class="form-control-plaintext" id="staticEmail"
+            value="{{ dns_data.cachesize }}">
+        </div>
+      </div>
+      <div class="mb-2 row">
+        <label for="listenaddress" class="col-sm-2 col-form-label">Listen Address:</label>
+        <div class="col-sm-2">
+          <select class="form-select" readonly multiple disabled>
+        {% for address in dns_data.listenaddress %}
+        <option selected>{{ address }}</option>
+        {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="mb-2 row">
+        <label for="allowfrom" class="col-sm-2 col-form-label">Allow From:</label>
+        <div class="col-sm-2">
+          <select class="form-select" readonly multiple disabled>
+        {% for address in dns_data.allowfrom %}
+        <option selected>{{ address }}</option>
+        {% endfor %}
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editDNSServer">
+        Edit
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="createDNSServer" tabindex="-1" aria-labelledby="createDNSServer" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createDNSServer">Create DNS Entry</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/dns-service/create" method="post">
+
+            <div class="mb-3">
+              <label for="subnet" class="form-label">Cache Size</label>
+              <input type="text" class="form-control" id="cachesize" name="cachesize">
+            </div>
+            <div class="mb-3">
+              <label for="defaultrouter" class="form-label">Listen Address</label>
+              <input type="text" class="form-control" id="listenaddress" name="listenaddress">
+            </div>
+            <div class="mb-3">
+              <label for="nameserver" class="form-label">Allow From</label>
+              <input type="text" class="form-control" id="allowfrom" name="allowfrom">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editDNSServer" tabindex="-1" aria-labelledby="editDNSServer" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editDNSServer">Edit DNS Entry</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form action="/dns-service/update" method="post">
+  
+              <div class="mb-3">
+                <label for="subnet" class="form-label">Cache Size</label>
+                <input type="text" class="form-control" id="cachesize" name="cachesize" value="{{ dns_data.cachesize }}">
+              </div>
+              <div class="mb-3">
+                <label for="listenaddress" class="form-label">Listen Address</label>
+                <input type="text" class="form-control" id="listenaddress" name="listenaddress" value="{{ dns_data.listenaddress }}">
+              </div>
+              <div class="mb-3">
+                <label for="allowfrom" class="form-label">Allow From</label>
+                <input type="text" class="form-control" id="allowfrom" name="allowfrom" value="{{ dns_data.allowfrom }}">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  {%endblock%}

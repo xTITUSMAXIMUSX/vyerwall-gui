@@ -1,1 +1,2 @@
-# vyerwall-gui
+# Vyerwall-GUI for use with Cyos
+The vyerwall-gui project is not affiliated with VyOS in any way. It is a wholly separate project to build a community tool that helps to visually build and manage firewall specific configurations for VyOS firewalls. This project is not owned by VyOS.io, or Sentrium S.L., nor does it seek to appear to be an official project, product or partner of the aforementioned.

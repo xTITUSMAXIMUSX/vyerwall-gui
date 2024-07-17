@@ -1,0 +1,119 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Add API Host{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Add API Host</h1>
+    <form method="POST" action="{{ url_for('api_host') }}">
+        <div class="mb-3">
+            <label for="hostname" class="form-label">Hostname:</label>
+            <input type="text" class="form-control" id="hostname" name="hostname" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="apikey" class="form-label">API Key:</label>
+            <input type="text" class="form-control" id="apikey" name="apikey" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="port" class="form-label">Port:</label>
+            <input type="number" class="form-control" id="port" name="port" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="protocol" class="form-label">Protocol:</label>
+            <select class="form-select" id="protocol" name="protocol" required>
+                <option value="http">HTTPS</option>
+                <option value="https">HTTP</option>
+            </select>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="verify_ssl" name="verify_ssl">
+            <label class="form-check-label" for="verify_ssl">Verify SSL</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add</button>
+    </form>
+</div>
+
+<div class="container mt-5">
+    <h1 class="mb-4">API Hosts</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Hostname</th>
+                <th>Port</th>
+                <th>Protocol</th>
+                <th>Verfiy SSL</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in api_entries %}
+            <tr>
+                <td>{{ entry.hostname }}</td>
+                <td>{{ entry.port }}</td>
+                <td>{{ entry.protocol }}</td>
+                <td>{{ entry.verify_ssl }}</td>
+                <td>
+                    <!-- Edit button -->
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ entry.id }}">
+                        Edit
+                    </button>
+                    <form action="{{ url_for('connect_api_host', entry_id=entry.id) }}" method="post" style="display: inline;">
+                      <button type="submit" class="btn btn-success btn-sm">Connect</button>
+                  </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% for entry in api_entries %}
+  <!-- Modal -->
+  <div class="modal fade" id="editModal{{ entry.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Edit API Host {{ entry.hostname }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="{{ url_for('edit_api_host', entry_id=entry.id) }}" method="post">
+            <div class="mb-3">
+              <label for="hostname" class="form-label">Hostname</label>
+              <input type="text" class="form-control" id="hostname" name="hostname" value="{{ entry.hostname }}">
+            </div>
+            <div class="mb-3">
+                <label for="apikey" class="form-label">API Key</label>
+                <input type="text" class="form-control" id="apikey" name="apikey" value="{{ entry.apikey }}">
+              </div>
+              <div class="mb-3">
+                <label for="port" class="form-label">port</label>
+                <input type="text" class="form-control" id="port" name="port" value="{{ entry.port }}">
+              </div>
+              <div class="mb-3">
+                <label for="protocol" class="form-label">Protocol:</label>
+                <select class="form-select" id="protocol" name="protocol" required>
+                    <option value="http" {% if entry.protocol == 'http' %} selected {% endif %}>HTTP</option>
+                    <option value="https" {% if entry.protocol == 'https' %} selected {% endif %}>HTTPS</option>
+                </select>
+            </div>            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="verify_ssl" name="verify_ssl" {% if entry.verify_ssl %} checked {% endif %}>
+                <label class="form-check-label" for="verify_ssl">Verify SSL</label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+
+{%endblock%}

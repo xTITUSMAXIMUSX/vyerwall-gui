@@ -1,0 +1,347 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Groups{% endblock %}
+{% block content %}
+<div class="container">
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link active" href="#network-group-tab" data-bs-toggle="tab">Network Group</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#interface-group-tab" data-bs-toggle="tab">Interface Group</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#mac-group-tab" data-bs-toggle="tab">MAC Group</a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Network Group Tab -->
+    <div class="tab-pane fade show active" id="network-group-tab">
+      <button class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#createNetworkGroup">Create Network Group</button>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Network Group Name</th>
+              <th>Network</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for group in network_group_data %}
+            <tr>
+              <td>{{ group.group_name }}</td>
+              <td>{{ group.network }}</td>
+              <td>
+                <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editNetworkGroup">Edit</a>
+                <form action="/groups/network/delete" method="post" style="display: inline;" onsubmit="return confirmDeleteAndShowSpinner(this);">
+                  <input type="hidden" id="group_name" name="group_name" value="{{ group.group_name }}">
+                  <input type="hidden" id="network" name="network" value="{{ group.network }}">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Interface Group Tab -->
+    <div class="tab-pane fade" id="interface-group-tab">
+      <button class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#createInterfaceGroup">Create Interface Group</button>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Interface Group Name</th>
+              <th>Interfaces</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for interface_group in interface_group_data %}
+            <tr>
+              <td>{{ interface_group.interface_group_name }}</td>
+              <td>{{ interface_group.interface }}</td>
+              <td>
+                <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editInterfaceGroup">Edit</a>
+                <form action="/groups/interface/delete" method="post" style="display: inline;" onsubmit="return confirmDeleteAndShowSpinner(this);">
+                  <input type="hidden" id="group_name" name="group_name" value="{{ interface_group.interface_group_name }}">
+                  <input type="hidden" id="interface" name="interface" value="{{ interface_group.interface }}">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MAC Group Tab -->
+    <div class="tab-pane fade" id="mac-group-tab">
+      <button class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#createMACGroup">Create MAC Group</button>
+      <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+          <th>MAC Group Name</th>
+          <th>MAC Addresses</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for mac_group in mac_group_data %}
+        <tr>
+          <td>{{ mac_group.mac_group_name }}</td>
+          <td>
+          {% for mac in mac_group.mac_addresses %}
+            {{ mac }} 
+            <form action="/groups/mac/remove" method="post" style="display: inline;" onsubmit="return confirmRemoveAndShowSpinner(this);">
+              <input type="hidden" id="mac_group_name" name="mac_group_name" value="{{ mac_group.mac_group_name }}">
+              <input type="hidden" id="mac" name="mac" value="{{ mac }}">
+              <button type="submit" class="btn btn-danger btn-sm">Remove MAC Address</button>
+            </form>
+            <br>
+            <br>
+          {% endfor %}
+          </td>
+          <td>
+          <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addMACGroup" onclick="populateAddMACModal('{{ mac_group.mac_group_name }}')">Add MAC Address</button>
+          <form action="/groups/mac/delete" method="post" style="display: inline;" onsubmit="return confirmDeleteAndShowSpinner(this);">
+            <input type="hidden" id="mac_group_name" name="mac_group_name" value="{{ mac_group.mac_group_name }}">
+            <input type="hidden" id="mac" name="mac" value="{{ mac_group.mac }}">
+            <button type="submit" class="btn btn-danger btn-sm">Delete Group</button>
+          </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    </div>
+
+  <!-- Create Network Group Modal -->
+  <div class="modal fade" id="createNetworkGroup" tabindex="-1" aria-labelledby="createNetworkGroup" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createNetworkGroup">Create Network Group</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/groups/network/create" method="post" onsubmit="showSpinner()">
+            <div class="mb-3">
+              <label for="group_name" class="form-label">Group Name</label>
+              <input type="text" class="form-control" id="group_name" name="group_name">
+            </div>
+            <div class="mb-3">
+              <label for="network" class="form-label">Network</label>
+              <input type="text" class="form-control" id="network" name="network">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+          <div id="networkGroupSpinner" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Committing...</span>
+            </div>
+            <p>Committing...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Interface Group Modal -->
+  <div class="modal fade" id="createInterfaceGroup" tabindex="-1" aria-labelledby="createInterfaceGroup" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createInterfaceGroup">Create Interface Group</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="/groups/interface/create" method="post" onsubmit="showSpinner()">
+          <div class="mb-3">
+            <label for="interface_group_name" class="form-label">Group Name</label>
+            <input type="text" class="form-control" id="interface_group_name" name="interface_group_name">
+          </div>
+          <div class="mb-3">
+            <label for="interface" class="form-label">Interface</label>
+            <input type="text" class="form-control" id="interface" name="interface">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+        <div id="networkGroupSpinner" class="text-center d-none">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Committing...</span>
+          </div>
+          <p>Committing...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create MAC Group Modal -->
+<div class="modal fade" id="createMACGroup" tabindex="-1" aria-labelledby="createMACGroup" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createMACGroup">Create MAC Group</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/groups/mac/create" method="post" onsubmit="showSpinner()">
+          <div class="mb-3">
+            <label for="mac_group_name" class="form-label">Mac Group Name</label>
+            <input type="text" class="form-control" id="mac_group_name" name="mac_group_name">
+          </div>
+          <div class="mb-3">
+            <label for="mac" class="form-label">MAC Address</label>
+            <input type="text" class="form-control" id="mac" name="mac">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+        <div id="networkGroupSpinner" class="text-center d-none">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Committing...</span>
+          </div>
+          <p>Committing...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add MAC Address Modal -->
+<div class="modal fade" id="addMACGroup" tabindex="-1" aria-labelledby="addMACGroup" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addMACGroup">Add MAC Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/groups/mac/add" method="post" id="addMACForm" onsubmit="showSpinner()">
+          <div class="mb-3">
+            <label for="mac_group_name_add" class="form-label">MAC Group Name</label>
+            <input type="text" class="form-control" id="mac_group_name_add" name="mac_group_name_add" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="mac_add" class="form-label">MAC Address</label>
+            <input type="text" class="form-control" id="mac_add" name="mac_add">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Add MAC</button>
+          </div>
+        </form>
+        <div id="networkGroupSpinner" class="text-center d-none">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Committing...</span>
+          </div>
+          <p>Committing...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Remove MAC Address Modal -->
+<div class="modal fade" id="removeMACGroup" tabindex="-1" aria-labelledby="removeMACGroup" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="removeMACGroup">Remove MAC Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/groups/mac/remove" method="post" id="removeMACForm" onsubmit="showSpinner()">
+          <div class="mb-3">
+            <label for="mac_group_name_remove" class="form-label">MAC Group Name</label>
+            <input type="text" class="form-control" id="mac_group_name_remove" name="mac_group_name_remove" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="mac_remove" class="form-label">MAC Address</label>
+            <select class="form-select" id="mac_remove" name="mac_remove">
+              <!-- Options will be dynamically populated here -->
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-danger">Remove MAC</button>
+          </div>
+        </form>
+        <div id="networkGroupSpinner" class="text-center d-none">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Committing...</span>
+          </div>
+          <p>Committing...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    let url = new URL(window.location.href);
+    let hash = url.hash;
+
+    if (hash) {
+      let tabLink = document.querySelector(`.nav-link[href="${hash}"]`);
+      let tabContent = document.querySelector(hash);
+
+      if (tabLink && tabContent) {
+        let activeTab = document.querySelector('.nav-link.active');
+        let activeTabPane = document.querySelector('.tab-pane.show.active');
+
+        if (activeTab) activeTab.classList.remove('active');
+        if (activeTabPane) activeTabPane.classList.remove('show', 'active');
+
+        tabLink.classList.add('active');
+        tabContent.classList.add('show', 'active');
+      }
+    }
+  });
+
+  function confirmDeleteAndShowSpinner(form) {
+    if (confirm('Are you sure you want to delete this group?')) {
+      showSpinner();
+      return true; // Proceed with form submission
+    } else {
+      return false; // Cancel form submission
+    }
+  }
+
+  function confirmRemoveAndShowSpinner(form) {
+    if (confirm('Are you sure you want to delete this address?')) {
+      showSpinner();
+      return true; // Proceed with form submission
+    } else {
+      return false; // Cancel form submission
+    }
+  }
+
+  function showSpinner() {
+    let networkGroupSpinner = document.getElementById('networkGroupSpinner');
+    networkGroupSpinner.classList.remove('d-none');
+  }
+
+  function populateAddMACModal(macGroupName) {
+    document.getElementById('mac_group_name_add').value = macGroupName;
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'layouts/main.html' %}
+{% block title %}DHCP Server{% endblock %}
+{% block content %}
+<div class="container">
+  <ul class="nav nav-tabs">
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createDHCPServer">
+      Create DHCP Server
+    </button>
+  </ul>
+  
+
+<!-- Create Modal -->
+<div class="modal fade" id="createDHCPServer" tabindex="-1" aria-labelledby="createDHCPServer" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createDHCPServer">Create DHCP Server</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/dhcp-service/create" method="post">
+          <div class="mb-3">
+            <label for="sharednetworkname" class="form-label">Shared Network Name</label>
+            <input type="text" class="form-control" id="sharednetworkname" name="sharednetworkname">
+          </div>
+          <div class="mb-3">
+            <label for="subnet" class="form-label">Subnet</label>
+            <input type="text" class="form-control" id="subnet" name="subnet">
+          </div>
+          <div class="mb-3">
+            <label for="defaultrouter" class="form-label">Default Router</label>
+            <input type="text" class="form-control" id="defaultrouter" name="defaultrouter">
+          </div>
+          <div class="mb-3">
+            <label for="nameserver" class="form-label">Name Server</label>
+            <input type="text" class="form-control" id="nameserver" name="nameserver">
+          </div>
+          <div class="mb-3">
+            <label for="domainname" class="form-label">Domain Name</label>
+            <input type="text" class="form-control" id="domainname" name="domainname">
+          </div>
+          <div class="mb-3">
+            <label for="lease" class="form-label">Lease</label>
+            <input type="text" class="form-control" id="lease" name="lease">
+          </div>
+          <div class="mb-3">
+            <label for="rangestart" class="form-label">Range Start</label>
+            <input type="text" class="form-control" id="rangestart" name="rangestart">
+          </div>
+          <div class="mb-3">
+            <label for="rangestop" class="form-label">Range Stop</label>
+            <input type="text" class="form-control" id="rangestop" name="rangestop">
+          </div>
+          <div class="mb-3">
+            <label for="subnetid" class="form-label">Subnet ID</label>
+            <input type="text" class="form-control" id="subnetid" name="subnetid">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{%endblock%}

@@ -1,0 +1,111 @@
+{% extends 'layouts/main.html' %}
+{% block title %}VLAN's{% endblock %}
+{% block content %}
+<div class="container">
+    <button class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#createVLAN">Create VLAN</button>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>VLAN ID</th>
+                    <th>Parent Interface</th>
+                    <th>Address</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vlan in vlan_data %}
+                <tr>
+                    <td>{{ vlan.vif }}</td>
+                    <td>{{ vlan.parentinterface }}</td>
+                    <td>{{ vlan.address }}</td>
+                    <td>{{ vlan.description }}</td>
+                    <td>
+                        <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editVLAN">Edit</a>
+                        <form action="/vlans/delete" method="post" style="display: inline;">
+                            <input type="hidden" id="parentinterface" name="parentinterface" value="{{ vlan.parentinterface }}">
+                            <input type="hidden" id="vif" name="vif" value="{{ vlan.vif }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Create Modal -->
+    <div class="modal fade" id="createVLAN" tabindex="-1" aria-labelledby="createVLAN" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createVLAN">Create VLAN</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/vlans/create" method="post">
+                        <div class="mb-3">
+                            <label for="vlanid" class="form-label">VLAN ID</label>
+                            <input type="text" class="form-control" id="vlanid" name="vlanid">
+                        </div>
+                        <div class="mb-3">
+                            <label for="parentinterface" class="form-label">Parent Interface</label>
+                            <input type="text" class="form-control" id="parentinterface" name="parentinterface">
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address" name="address">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="description">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editVLAN" tabindex="-1" aria-labelledby="editVLAN" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editVLAN">Create VLAN</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/vlans/create" method="post">
+                        <div class="mb-3">
+                            <label for="vlanid" class="form-label">VLAN ID</label>
+                            <input type="text" class="form-control" id="vlanid" name="vlanid">
+                        </div>
+                        <div class="mb-3">
+                            <label for="parentinterface" class="form-label">Parent Interface</label>
+                            <input type="text" class="form-control" id="parentinterface" name="parentinterface">
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address" name="address">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="description">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

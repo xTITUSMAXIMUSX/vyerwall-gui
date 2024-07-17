@@ -1,0 +1,96 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Interfaces{% endblock %}
+{% block content %}
+<div class="container">
+  <ul class="nav nav-tabs">
+    {% for ethernet_interface in ethernet_interfaces %}
+    <li class="nav-item">
+      <a class="nav-link {% if ethernet_interface == selected_interface %}active{% endif %}"
+        href="/interfaces/{{ ethernet_interface }}">{{ ethernet_interface }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+
+
+  <div class="tab-content">
+    {% for ethernet_interface in ethernet_interfaces %}
+    <div class="tab-pane fade {% if ethernet_interface == selected_interface %}show active{% endif %}"
+      id="{{ ethernet_interface }}">
+      <div class="mb-2 row">
+        <label for="ipv4configuration" class="col-sm-2 col-form-label">IPv4 Configuration:</label>
+        <div class="col-sm-2">
+          <input type="text" readonly class="form-control-plaintext" id="staticEmail"
+            value="{{ configuration.address }}">
+        </div>
+      </div>
+      <div class="mb-2 row">
+        <label for="description" class="col-sm-2 col-form-label">Description:</label>
+        <div class="col-sm-2">
+          <input type="text" readonly class="form-control-plaintext" id="staticEmail"
+            value="{{ configuration.description }}">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editInterface">
+        Edit
+      </button>
+    </div>
+    {% endfor %}
+
+
+<!-- Modal -->
+<div class="modal fade" id="editInterface" tabindex="-1" aria-labelledby="editInterfaceLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editInterfaceLabel">Edit Interface {{ selected_interface }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/interface/update" method="post">
+          <input type="hidden" name="interface" value="{{ selected_interface }}">
+          <div class="mb-3">
+            <label for="configType" class="form-label">Configuration Type</label>
+            <select class="form-select" id="configType" name="configType" onchange="toggleAddressField()">
+              <option value="dhcp" {% if configuration.address == 'dhcp' %}selected{% endif %}>DHCP</option>
+              <option value="static" {% if configuration.address != 'dhcp' %}selected{% endif %}>Static</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="address" class="form-label">Address</label>
+            <input type="text" class="form-control" id="address" name="address" value="{{ configuration.address }}">
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" id="description" name="description"
+              value="{{ configuration.description }}">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary" onclick="showLoading()">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function toggleAddressField() {
+    var configType = document.getElementById("configType").value;
+    var addressField = document.getElementById("address");
+  
+    if (configType === "dhcp") {
+      addressField.value = "dhcp";
+      addressField.readOnly = true;
+    } else {
+      addressField.value = "{{ configuration.address }}";
+      addressField.readOnly = false;
+    }
+  }
+  
+  document.addEventListener("DOMContentLoaded", function() {
+    toggleAddressField(); // Initialize the address field state based on the current configuration
+  });
+  </script>
+
+
+    {%endblock%}

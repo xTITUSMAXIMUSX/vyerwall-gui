@@ -1,0 +1,56 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Add API Host{% endblock %}
+{% block content %}
+    <!-- Include jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Include jQuery UI for sortable functionality -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        /* Optional: Add CSS styling for firewall rules */
+        .firewall-rule {
+            cursor: grab;
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            list-style-type: none;
+        }
+    </style>
+</head>
+<body>
+
+<ul id="firewall-rules">
+    <li id="rule1" class="firewall-rule">Rule 1</li>
+    <li id="rule2" class="firewall-rule">Rule 2</li>
+    <li id="rule3" class="firewall-rule">Rule 3</li>
+</ul>
+
+<!-- JavaScript code -->
+<script>
+    // Make the firewall rules draggable
+    $( function() {
+        $( "#firewall-rules" ).sortable({
+            update: function(event, ui) {
+                // Get the updated order of the firewall rules
+                var order = $(this).sortable('toArray').map(Number);
+                
+                // Send the updated order to the backend
+                $.ajax({
+                    url: '/update_firewall_rules_order',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ order: order }),
+                    success: function(response) {
+                        console.log('Order updated successfully');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error updating order:', error);
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+</body>
+{% block content %}
