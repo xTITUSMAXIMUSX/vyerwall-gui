@@ -7,3 +7,4 @@ lib/
 migrations/
 bin/
 include/
+pyvenv.cfg
