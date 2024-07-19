@@ -19,6 +19,8 @@ from services.service_ssh import bp_ssh_service
 from services.service_dhcp import bp_dhcp_service
 from services.service_dns import bp_dns_service
 from firewall.groups import bp_groups
+from firewall.rules import bp_rules
+from firewall.nat import bp_nat
 
 
 app = Flask(__name__)
@@ -40,6 +42,8 @@ app.register_blueprint(bp_ssh_service)
 app.register_blueprint(bp_dhcp_service)
 app.register_blueprint(bp_dns_service)
 app.register_blueprint(bp_groups)
+app.register_blueprint(bp_rules)
+app.register_blueprint(bp_nat)
 
 
 # Initialize Flask-Login
