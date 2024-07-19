@@ -206,6 +206,23 @@ def disconnect_api_host(entry_id):
     flash('Disconnected from API host successfully.', 'success')
     return redirect(url_for('api_host'))
 
+@app.route('/delete-api-host/<int:entry_id>', methods=['POST'])
+@login_required
+def delete_api_host(entry_id):
+    entry = APISettings.query.get_or_404(entry_id)
+    if entry.connected:
+        flash('Cannot delete a connected API host. Disconnect it first.', 'error')
+        return redirect(url_for('api_host'))
+    
+    try:
+        db.session.delete(entry)
+        db.session.commit()
+        flash('API host deleted successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {e}', 'error')
+
+    return redirect(url_for('api_host'))
+
 
 @app.route('/logout')
 @login_required
