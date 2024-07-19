@@ -10,3 +10,4 @@ include/
 pyvenv.cfg
 lib64
 var/
+test.py
