@@ -49,7 +49,7 @@ def groups():
     # Convert dictionary to list of dictionaries
     mac_group_data_list = [{'mac_group_name': name, 'mac_addresses': macs} for name, macs in mac_group_data.items()]
 
-    return render_template('forms/groups.html', 
+    return render_template('forms/firewall-groups.html', 
                             network_group_data=network_group_data, 
                             interface_group_data=interface_group_data, 
                             mac_group_data=mac_group_data_list)
