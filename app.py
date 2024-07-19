@@ -27,7 +27,7 @@ app.secret_key = 'your_secret_key'
 
 # Configure the database URI with mysqlclient
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sqlite.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = TRUE
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -221,6 +221,6 @@ def not_found(error):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all(),
+        db.create_all()
         create_admin_user()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
