@@ -8,6 +8,7 @@ from pyvyos.device import VyDevice, ApiResponse
 import string
 import re
 import random
+import json
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -185,17 +186,15 @@ def connect_api_host(entry_id):
         )
         current_app.device = device  
         response = current_app.device.show([['conf', 'json']])
-        load_groups = json.loads(response.result)
+        load_config = json.loads(response.result)
     
-        # Conenction Test
-        connection_test = load_groups.get('firewall', {})
-        if connection_test:
+        if load_config:
             entry.connected = True
             db.session.commit()
             flash('Connected to API host successfully.', 'success')
             return redirect(url_for('home'))
     except Exception as e:
-        flash(f'Could not connect to Vyos API', 'error')
+        flash('Could not connect to Vyos API', 'error')
         return redirect(url_for('api_host'))
 
 @app.route('/disconnect-api-host/<int:entry_id>', methods=['POST'])
