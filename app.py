@@ -184,12 +184,19 @@ def connect_api_host(entry_id):
             verify=entry.verify_ssl
         )
         current_app.device = device  
-        entry.connected = True
-        db.session.commit()
-        flash('Connected to API host successfully.', 'success')
+        response = current_app.device.show([['conf', 'json']])
+        load_groups = json.loads(response.result)
+    
+        # Conenction Test
+        connection_test = load_groups.get('firewall', {})
+        if connection_test:
+            entry.connected = True
+            db.session.commit()
+            flash('Connected to API host successfully.', 'success')
+            return redirect(url_for('home'))
     except Exception as e:
-        flash(f'Failed to connect to API host: {str(e)}', 'error')
-    return redirect(url_for('home'))
+        flash(f'Could not connect to Vyos API', 'error')
+        return redirect(url_for('api_host'))
 
 @app.route('/disconnect-api-host/<int:entry_id>', methods=['POST'])
 @login_required
