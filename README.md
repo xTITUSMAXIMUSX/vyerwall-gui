@@ -6,5 +6,5 @@ The vyerwall-gui project is not affiliated with VyOS in any way. It is a wholly 
 2. cd into the vyverwall-gui directory
 3. run `docker build -t vyverwall-gui .`
 4. run `docker run -d -p 5000:5000 --name vyerwall-gui -v /path/to/db:/app/var/app-instance vyerwall-gui`
-5. Navigate to http://<IP>:5000
+5. Navigate to http://ip-address:5000
 6. Default user/pass is `admin`
