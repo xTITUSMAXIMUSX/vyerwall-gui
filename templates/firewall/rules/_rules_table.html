@@ -1,6 +1,6 @@
 {% import 'firewall/rules/_macros.html' as rules_macros %}
 
-<div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+<div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden flex flex-col">
   <div class="px-4 py-3 border-b border-gray-700 flex flex-wrap items-center justify-between gap-2">
     <h3 class="text-lg font-semibold text-white">Firewall Rules</h3>
     <div class="flex items-center gap-2">
@@ -22,7 +22,7 @@
       </button>
     </div>
   </div>
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto max-h-[32rem]">
     <table class="min-w-full text-sm text-gray-200" id="firewallRulesTable">
       <thead class="bg-gray-800 text-gray-400 uppercase text-xs tracking-wider">
         <tr>

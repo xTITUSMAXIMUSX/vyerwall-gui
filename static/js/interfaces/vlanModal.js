@@ -40,7 +40,7 @@ export function bindCreateVlanModal() {
 async function submitCreateVlanForm(event) {
   event.preventDefault();
 
-  const parentInterface = (document.querySelector('#parentInterface')?.value || '').trim();
+  const parentInterface = (elements.vlanParentSelect?.value || '').trim();
   const vlanId = (document.querySelector('#vlanId')?.value || '').trim();
   const description = (document.querySelector('#vlanDescription')?.value || '').trim();
   const mode = elements.vlanModeSelect ? elements.vlanModeSelect.value : 'dhcp';

@@ -20,6 +20,7 @@ export function cacheElements() {
   elements.createVlanBtn = document.querySelector('#createVlanBtn');
   elements.createModal = document.querySelector('#createModal');
   elements.createForm = document.querySelector('#createForm');
+  elements.vlanParentSelect = document.querySelector('#vlanParent');
   elements.vlanModeSelect = document.querySelector('#vlanMode');
   elements.vlanAddressInput = document.querySelector('#vlanAddress');
   elements.vlanNatSelect = document.querySelector('#vlanNatInterface');
