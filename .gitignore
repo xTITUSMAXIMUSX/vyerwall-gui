@@ -12,10 +12,6 @@ lib/
 lib64/
 pyvenv.cfg
 
-# Logs
-logs/
-*.log
-
 # Test Files
 testing_retrys.py
 test_script.py
