@@ -7,7 +7,5 @@ lib/
 lib64/
 include/
 pyvenv.cfg
-logs/
-*.log
 .git
 .gitignore

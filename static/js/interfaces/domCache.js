@@ -45,8 +45,14 @@ export function cacheElements() {
 
   elements.deleteModal = document.querySelector('#deleteModal');
   elements.deleteIfaceName = document.querySelector('#deleteIfaceName');
+  elements.deleteMessage = document.querySelector('#deleteMessage');
+  elements.deleteInterfaceValue = document.querySelector('#deleteInterfaceValue');
+  elements.deleteZoneValue = document.querySelector('#deleteZoneValue');
+  elements.deleteAddressValue = document.querySelector('#deleteAddressValue');
+  elements.deleteDescriptionValue = document.querySelector('#deleteDescriptionValue');
   elements.cancelDeleteBtn = document.querySelector('#cancelDelete');
   elements.confirmDeleteBtn = document.querySelector('#confirmDelete');
   elements.deleteSpinner = document.querySelector('#deleteSpinner');
   elements.deleteSubmitLabel = document.querySelector('#deleteSubmitLabel');
+  elements.deleteCloseButtons = Array.from(document.querySelectorAll('[data-delete-close]'));
 }

@@ -3,6 +3,13 @@ source /opt/vyatta/etc/functions/script-template
 
 #set -o pipefail
 
+CONTAINER_DIR="/config/containers/vyerwall-gui"
+ENV_FILE="${CONTAINER_DIR}/.env"
+API_KEY_FILE="${CONTAINER_DIR}/api.key"
+CONTAINER_IMAGE_DEFAULT="xtitusmaximusx/vyerwall-gui:latest"
+
+mkdir -p "${CONTAINER_DIR}"
+
 ip_to_int() {
     local ip=$1 extra
     local o1 o2 o3 o4
@@ -21,6 +28,37 @@ ip_to_int() {
 int_to_ip() {
     local value=$(( $1 & 0xFFFFFFFF ))
     printf '%d.%d.%d.%d' $(((value >> 24) & 255)) $(((value >> 16) & 255)) $(((value >> 8) & 255)) $((value & 255))
+}
+
+validate_cidr() {
+    local cidr=$1
+    local ip prefix extra
+
+    IFS=/ read -r ip prefix extra <<< "$cidr"
+    if [[ -n $extra || -z $prefix || -z $ip ]]; then
+        return 1
+    fi
+    if [[ ! $prefix =~ ^[0-9]+$ ]] || (( prefix < 0 || prefix > 32 )); then
+        return 1
+    fi
+    if ! ip_to_int "$ip" >/dev/null 2>&1; then
+        return 1
+    fi
+    return 0
+}
+
+update_env_var() {
+    local key=$1
+    local value=$2
+    local escaped=${value//\\/\\\\}
+    escaped=${escaped//&/\\&}
+    escaped=${escaped//|/\\|}
+
+    if grep -q "^${key}=" "${ENV_FILE}" 2>/dev/null; then
+        sed -i "s|^${key}=.*|${key}=\"${escaped}\"|" "${ENV_FILE}"
+    else
+        echo "${key}=\"${value}\"" >> "${ENV_FILE}"
+    fi
 }
 
 calc_network_details() {
@@ -111,6 +149,53 @@ while true; do
     echo "❌ Invalid CIDR. Please try again."
 done
 
+# GUI Dummy Interface
+echo ""
+echo "--- Vyerwall GUI Web Interface ---"
+read -rp "Interface name for the GUI web binding [dum0]: " DUMMY_IF
+DUMMY_IF=${DUMMY_IF:-dum0}
+
+DEFAULT_DUMMY_CIDR="192.168.0.1/32"
+while true; do
+    read -rp "IP/CIDR for the GUI interface (e.g., ${DEFAULT_DUMMY_CIDR}): " DUMMY_CIDR
+    DUMMY_CIDR=${DUMMY_CIDR:-${DEFAULT_DUMMY_CIDR}}
+    if validate_cidr "${DUMMY_CIDR}"; then
+        DUMMY_IP="${DUMMY_CIDR%/*}"
+        break
+    fi
+    echo "Invalid CIDR. Please try again."
+done
+
+# API Connectivity
+echo ""
+echo "--- VyOS API Settings (for GUI .env) ---"
+read -rp "VyOS API host reachable from container [127.0.0.1]: " API_HOST
+API_HOST=${API_HOST:-127.0.0.1}
+read -rp "VyOS API port [443]: " API_PORT
+API_PORT=${API_PORT:-443}
+read -rp "VyOS API protocol [https]: " API_PROTOCOL
+API_PROTOCOL=${API_PROTOCOL:-https}
+read -rp "Verify SSL certificates? (true/false) [false]: " API_VERIFY
+API_VERIFY=${API_VERIFY:-false}
+
+# GUI Credentials
+echo ""
+echo "--- Vyerwall GUI Credentials ---"
+read -rp "Web UI username [admin]: " GUI_USERNAME
+GUI_USERNAME=${GUI_USERNAME:-admin}
+read -rp "Web UI password [admin]: " GUI_PASSWORD
+GUI_PASSWORD=${GUI_PASSWORD:-admin}
+
+# Container Settings
+echo ""
+echo "--- Container Settings ---"
+read -rp "Container name [vyerwall-gui]: " CONTAINER_NAME
+CONTAINER_NAME=${CONTAINER_NAME:-vyerwall-gui}
+read -rp "Container image [${CONTAINER_IMAGE_DEFAULT}]: " CONTAINER_IMAGE
+CONTAINER_IMAGE=${CONTAINER_IMAGE:-${CONTAINER_IMAGE_DEFAULT}}
+read -rp "Container restart policy (no/on-failure/always) [always]: " CONTAINER_RESTART_POLICY
+CONTAINER_RESTART_POLICY=${CONTAINER_RESTART_POLICY:-always}
+
 # DHCP
 echo ""
 echo "--- DHCP Server Configuration ---"
@@ -146,6 +231,13 @@ echo " LAN Interface:       ${LAN_IF}"
 echo " LAN IP/Subnet:       ${LAN_IP}"
 echo " LAN Network:         ${LAN_NETWORK}"
 echo ""
+echo " GUI Web Interface:   ${DUMMY_IF}"
+echo " GUI Web Address:     ${DUMMY_CIDR}"
+echo ""
+echo " Container Name:      ${CONTAINER_NAME}"
+echo " Container Image:     ${CONTAINER_IMAGE}"
+echo " Restart Policy:      ${CONTAINER_RESTART_POLICY}"
+echo ""
 echo " DHCP Router:         ${DHCP_ROUTER}"
 echo " DHCP DNS Server:     ${DHCP_DNS}"
 echo " DHCP Range Start:    ${DHCP_START}"
@@ -155,7 +247,7 @@ echo "=========================================="
 read -rp "Proceed with configuration? (y/n): " CONFIRM
 
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    echo "❌ Setup cancelled. No changes made."
+    echo "Setup cancelled. No changes made."
     exit 0
 fi
 
@@ -175,6 +267,15 @@ fi
 # LAN
 set interfaces ethernet "${LAN_IF}" description "LAN"
 set interfaces ethernet "${LAN_IF}" address "${LAN_IP}"
+
+# Vyerwall GUI Web interface
+if [[ "${DUMMY_IF}" =~ ^dum[0-9]*$ ]]; then
+    set interfaces dummy "${DUMMY_IF}" description "Vyerwall GUI Management"
+    set interfaces dummy "${DUMMY_IF}" address "${DUMMY_CIDR}"
+else
+    set interfaces ethernet "${DUMMY_IF}" description "Vyerwall GUI Management"
+    set interfaces ethernet "${DUMMY_IF}" address "${DUMMY_CIDR}"
+fi
 
 # DHCP Server
 set service dhcp-server shared-network-name LAN subnet "${LAN_NETWORK}" option default-router "${DHCP_ROUTER}"
@@ -250,26 +351,58 @@ set service https api keys id vyerwallgui key "${API_KEY}"
 set service https api rest
 
 # Persist key for GUI consumption
-API_KEY_FILE="/config/vyerwallgui_api.key"
 echo "vyerwallgui:${API_KEY}" > "${API_KEY_FILE}"
 chmod 600 "${API_KEY_FILE}"
 
-ENV_FILE="/config/.env"
-if [[ -f "${ENV_FILE}" ]]; then
-    if grep -q '^VYDEVICE_APIKEY=' "${ENV_FILE}"; then
-        sed -i "s/^VYDEVICE_APIKEY=.*/VYDEVICE_APIKEY=\"${API_KEY}\"/" "${ENV_FILE}"
-    else
-        echo "VYDEVICE_APIKEY=\"${API_KEY}\"" >> "${ENV_FILE}"
-    fi
-else
-    echo "VYDEVICE_APIKEY=\"${API_KEY}\"" > "${ENV_FILE}"
-fi
+touch "${ENV_FILE}"
 chmod 600 "${ENV_FILE}"
+update_env_var "VYDEVICE_HOSTNAME" "${API_HOST}"
+update_env_var "VYDEVICE_APIKEY" "${API_KEY}"
+update_env_var "VYDEVICE_PORT" "${API_PORT}"
+update_env_var "VYDEVICE_PROTOCOL" "${API_PROTOCOL}"
+update_env_var "VYDEVICE_VERIFY_SSL" "${API_VERIFY}"
+update_env_var "USERNAME" "${GUI_USERNAME}"
+update_env_var "PASSWORD" "${GUI_PASSWORD}"
+
+# Container Configuration
+delete container name "${CONTAINER_NAME}"
+set container name "${CONTAINER_NAME}" image "${CONTAINER_IMAGE}"
+set container name "${CONTAINER_NAME}" description "Vyerwall GUI"
+set container name "${CONTAINER_NAME}" allow-host-networks
+set container name "${CONTAINER_NAME}" restart "${CONTAINER_RESTART_POLICY}"
+set container name "${CONTAINER_NAME}" volume envfile source "${ENV_FILE}"
+set container name "${CONTAINER_NAME}" volume envfile destination /app/.env
+set container name "${CONTAINER_NAME}" volume envfile mode ro
 
 # Commit
 commit
 save
 exit
+
+# ------------------------------------------
+# CONTAINER DEPLOYMENT
+# ------------------------------------------
+echo ""
+echo "--- Container Image Deployment ---"
+read -rp "Pull image and restart container now? (y/n) [y]: " DEPLOY_NOW
+DEPLOY_NOW=${DEPLOY_NOW:-y}
+
+if [[ "${DEPLOY_NOW}" =~ ^[Yy]$ ]]; then
+    if ! command -v podman >/dev/null 2>&1; then
+        echo "Podman CLI not available. Container will start automatically after next reboot/commit."
+    else
+        if ! run add container image "${CONTAINER_NAME}"; then
+            echo "Failed to pull container image for ${CONTAINER_NAME}. Check connectivity or registry access."
+        fi
+        if ! run restart container "${CONTAINER_NAME}"; then
+            echo "Failed to restart container ${CONTAINER_NAME}. Manual intervention may be required."
+        else
+            echo "Container ${CONTAINER_NAME} pulled and restarted."
+        fi
+    fi
+else
+    echo "Skipping immediate image pull; VyOS will manage the container using the configured image ${CONTAINER_IMAGE}."
+fi
 
 # ------------------------------------------
 # FINAL OUTPUT
@@ -288,12 +421,14 @@ echo " LAN Network: ${LAN_NETWORK}"
 echo " DHCP Range: ${DHCP_START} - ${DHCP_STOP}"
 echo " Default Router: ${DHCP_ROUTER}"
 echo " DNS: ${DHCP_DNS}"
+echo " GUI Web Interface: ${DUMMY_IF} (${DUMMY_CIDR})"
+echo " Container: ${CONTAINER_NAME}"
+echo " Image: ${CONTAINER_IMAGE}"
+echo " Restart Policy: ${CONTAINER_RESTART_POLICY}"
 echo "------------------------------------"
 echo " API Key ID: vyerwallgui"
 echo " API Key: ${API_KEY}"
 echo " Saved to: ${API_KEY_FILE}"
 echo " ENV File: ${ENV_FILE}"
 echo "------------------------------------"
-echo "You can now connect your VyOS frontend using the API key above."
-
-exit 0
+echo "GUI URL: http://${DUMMY_IP}:5000/"

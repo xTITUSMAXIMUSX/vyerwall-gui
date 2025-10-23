@@ -1,129 +1,56 @@
-const FirewallRulesView = (() => {
-  const selectors = {
-    zoneList: '#firewallZoneList',
-    pairList: '#firewallPairList',
-    tableBody: '#firewallRulesBody',
-    title: '#firewallTitle',
-    description: '#firewallDescription',
-    defaultAction: '#firewallDefaultAction',
-    ruleCount: '#firewallRuleCount',
-    zonePair: '#firewallZonePair',
-    addRuleButton: '#createFirewallRule',
-    reorderControls: '#reorderControls',
-    reorderSave: '#reorderSave',
-    reorderCancel: '#reorderCancel',
-    createZoneButton: '#createZoneButton',
-  };
+ (function initFirewallController(root) {
+  const namespace = root.Vyerwall || (root.Vyerwall = {});
+  const firewallNs = namespace.Firewall || (namespace.Firewall = {});
+  const constants = firewallNs.constants;
+  const utils = firewallNs.utils;
+  const fwState = firewallNs.state;
+  const state = fwState.data;
 
-  const allowedPortProtocols = ['tcp', 'udp', 'tcp_udp'];
-  const defaultPortProtocol = 'tcp_udp';
+  const selectors = constants.selectors;
+  const allowedPortProtocols = constants.allowedPortProtocols;
+  const defaultPortProtocol = constants.defaultPortProtocol;
+  const actionMetaMap = constants.labels.actions;
 
-  const state = {
-    names: [],
-    metadata: {},
-    zoneGroups: {},
-    zoneList: [],
-    interfaces: {
-      unassigned: [],
-    },
-    selectedName: null,
-    selectedZone: null,
-    isLoading: false,
-    rules: [],
-    rulesBaseline: [],
-    orderDirty: false,
-  };
+  const {
+    normalizeValue,
+    isAnyValue,
+    isAllProtocol,
+    formatProtocolDisplay,
+    formatEndpointDisplay,
+    formatPortDisplay,
+    escapeHtml,
+    toggleButtonLoading,
+    cloneRules,
+    encodeName,
+  } = utils;
 
-  const modals = {
-    add: document.getElementById('addRuleModal'),
-    edit: document.getElementById('editRuleModal'),
-    delete: document.getElementById('deleteRuleModal'),
-    disable: document.getElementById('disableRuleModal'),
-    createZone: document.getElementById('createZoneModal'),
-  };
+  let modals = {};
+  let forms = {};
+  let formButtons = {};
+  let confirmButtons = {};
+  let confirmSpinners = {};
+  let infoLabels = {};
+  let reorderControls = {};
+  let reorderSpinner = null;
+  let reorderSaveLabel = null;
+  let dragState = { index: null };
 
-  const forms = {
-    add: document.getElementById('addRuleForm'),
-    edit: document.getElementById('editRuleForm'),
-    createZone: document.getElementById('createZoneForm'),
-  };
-  const formButtons = {
-    addSubmit: document.getElementById('addRuleSubmit'),
-    addSpinner: document.getElementById('addRuleSpinner'),
-    addLabel: document.getElementById('addRuleSubmitLabel'),
-    editSubmit: document.getElementById('editRuleSubmit'),
-    editSpinner: document.getElementById('editRuleSpinner'),
-    editLabel: document.getElementById('editRuleSubmitLabel'),
-    createZoneSubmit: document.getElementById('createZoneSubmit'),
-    createZoneSpinner: document.getElementById('createZoneSpinner'),
-    createZoneLabel: document.getElementById('createZoneSubmitLabel'),
-  };
-
-  const confirmButtons = {
-    delete: document.getElementById('confirmDeleteRule'),
-    disable: document.getElementById('confirmDisableRule'),
-  };
-  const confirmSpinners = {
-    deleteSpinner: document.getElementById('deleteRuleSpinner'),
-    deleteLabel: document.getElementById('deleteRuleSubmitLabel'),
-  };
-
-  const infoLabels = {
-    delete: document.getElementById('deleteRuleMessage'),
-    disable: document.getElementById('disableRuleMessage'),
-  };
-
-  const reorderControls = {
-    container: document.querySelector(selectors.reorderControls),
-    save: document.querySelector(selectors.reorderSave),
-    cancel: document.querySelector(selectors.reorderCancel),
-  };
-  const reorderSpinner = document.getElementById('reorderSpinner');
-  const reorderSaveLabel = document.getElementById('reorderSaveLabel');
-
-  const dragState = {
-    index: null,
-  };
-
-  function encodeName(name) {
-    return encodeURIComponent(name);
+  function getActionMeta(action) {
+    const key = normalizeValue(action).toLowerCase();
+    return actionMetaMap[key] || actionMetaMap.fallback;
   }
 
-  function cloneRules(rules) {
-    return (rules || []).map((rule) => ({ ...rule }));
+  function clearDropTargets() {
+    document
+      .querySelectorAll(`${selectors.tableBody} tr.firewall-drop-target`)
+      .forEach((row) => row.classList.remove('firewall-drop-target'));
   }
 
-  const HTML_ESCAPES = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  };
-
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] || char);
-  }
-
-  function toggleButtonLoading(buttonEl, spinnerEl, labelEl, isLoading, idleText, busyText) {
-    if (!buttonEl || !labelEl) {
-      return;
-    }
-
-    if (isLoading) {
-      buttonEl.disabled = true;
-      buttonEl.classList.add('opacity-70', 'cursor-not-allowed', 'animate-pulse');
-      if (spinnerEl) {
-        spinnerEl.classList.remove('hidden');
-      }
-      labelEl.textContent = busyText;
-    } else {
-      buttonEl.disabled = false;
-      buttonEl.classList.remove('opacity-70', 'cursor-not-allowed', 'animate-pulse');
-      if (spinnerEl) {
-        spinnerEl.classList.add('hidden');
-      }
-      labelEl.textContent = idleText;
+  function markDropTarget(row) {
+    if (!row) return;
+    if (!row.classList.contains('firewall-drop-target')) {
+      clearDropTargets();
+      row.classList.add('firewall-drop-target');
     }
   }
 
@@ -820,6 +747,8 @@ const FirewallRulesView = (() => {
       return;
     }
 
+    clearDropTargets();
+
     const rules = state.rules || [];
     if (!rules.length) {
       renderEmptyRules(tbody);
@@ -840,20 +769,30 @@ const FirewallRulesView = (() => {
         ? 'text-green-400 hover:text-green-300'
         : 'text-yellow-400 hover:text-yellow-300';
       const toggleIcon = rule.disabled ? 'check_circle' : 'block';
+      const protocolDisplay = escapeHtml(formatProtocolDisplay(rule.protocol));
+      const sourceDisplay = escapeHtml(formatEndpointDisplay(rule.source));
+      const sourcePortDisplay = escapeHtml(formatPortDisplay(rule.source_port));
+      const destinationDisplay = escapeHtml(formatEndpointDisplay(rule.destination));
+      const destinationPortDisplay = escapeHtml(formatPortDisplay(rule.destination_port));
+      const descriptionDisplay = escapeHtml(rule.description || '-');
+      const actionMeta = getActionMeta(rule.action);
+      const actionLabelEscaped = escapeHtml(actionMeta.label);
       return `
       <tr class="${rowClasses.join(' ')}" draggable="${canDrag}" data-rule-id="${rule.id}" data-index="${index}" data-disabled="${rule.disabled ? 'true' : 'false'}">
         <td class="px-4 py-3 font-mono text-gray-100">
           <div class="flex items-center gap-2">
             <span class="material-icons text-gray-500 text-base drag-handle">drag_indicator</span>
+            <span class="material-icons text-base ${actionMeta.className}" title="${actionLabelEscaped}">${actionMeta.icon}</span>
+            <span class="sr-only">${actionLabelEscaped}</span>
             ${rule.number}
           </div>
         </td>
-        <td class="px-4 py-3">${rule.protocol || 'any'}</td>
-        <td class="px-4 py-3">${rule.source || 'any'}</td>
-        <td class="px-4 py-3">${rule.source_port || ''}</td>
-        <td class="px-4 py-3">${rule.destination || 'any'}</td>
-        <td class="px-4 py-3">${rule.destination_port || ''}</td>
-        <td class="px-4 py-3">${rule.description || '-'}</td>
+        <td class="px-4 py-3">${protocolDisplay}</td>
+        <td class="px-4 py-3">${sourceDisplay}</td>
+        <td class="px-4 py-3">${sourcePortDisplay}</td>
+        <td class="px-4 py-3">${destinationDisplay}</td>
+        <td class="px-4 py-3">${destinationPortDisplay}</td>
+        <td class="px-4 py-3">${descriptionDisplay}</td>
         <td class="px-4 py-3">
           <div class="flex items-center gap-2 text-sm">
             <button class="text-blue-400 hover:text-blue-300 btn-rule-edit flex items-center gap-1" data-rule-number="${rule.id}">
@@ -900,27 +839,38 @@ const FirewallRulesView = (() => {
 
       row.addEventListener('dragend', () => {
         row.classList.remove('opacity-50');
+        clearDropTargets();
         dragState.index = null;
       });
 
       row.addEventListener('dragover', (event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
+        markDropTarget(row);
       });
 
       row.addEventListener('drop', (event) => {
         event.preventDefault();
         if (dragState.index === null) {
+          clearDropTargets();
           return;
         }
         const targetIndex = Number(row.dataset.index);
         if (Number.isNaN(targetIndex) || targetIndex === dragState.index) {
+          clearDropTargets();
           return;
         }
         const newOrder = cloneRules(state.rules);
         const [moved] = newOrder.splice(dragState.index, 1);
         newOrder.splice(targetIndex, 0, moved);
         updateRulesOrder(newOrder);
+        clearDropTargets();
+      });
+
+      row.addEventListener('dragleave', (event) => {
+        if (!row.contains(event.relatedTarget)) {
+          row.classList.remove('firewall-drop-target');
+        }
       });
     });
   }
@@ -1114,17 +1064,28 @@ const FirewallRulesView = (() => {
     forms.edit.elements.originalNumber.value = rule.number;
     forms.edit.elements.number.value = rule.number;
     forms.edit.elements.action.value = rule.action || 'accept';
-    const normalizedProtocol = (rule.protocol || '').toLowerCase();
-    forms.edit.elements.protocol.value = allowedPortProtocols.includes(normalizedProtocol) ? normalizedProtocol : '';
+
+    let normalizedProtocol = normalizeValue(rule.protocol).toLowerCase();
+    if (isAllProtocol(rule.protocol)) {
+      normalizedProtocol = 'all';
+    }
+    const protocolSelect = forms.edit.elements.protocol;
+    if (protocolSelect) {
+      const availableValues = Array.from(protocolSelect.options).map((opt) => opt.value);
+      protocolSelect.value = availableValues.includes(normalizedProtocol) ? normalizedProtocol : '';
+    }
+
     forms.edit.elements.description.value = rule.description || '';
-    forms.edit.elements.sourceAddress.value = rule.source && rule.source !== 'any' ? rule.source : '';
-    forms.edit.elements.sourcePort.value = rule.source_port || '';
-    forms.edit.elements.destinationAddress.value = rule.destination && rule.destination !== 'any' ? rule.destination : '';
-    forms.edit.elements.destinationPort.value = rule.destination_port || '';
+    forms.edit.elements.sourceAddress.value = isAnyValue(rule.source) ? '' : normalizeValue(rule.source);
+    const sourcePortValue = isAnyValue(rule.source_port) ? '' : normalizeValue(rule.source_port);
+    forms.edit.elements.sourcePort.value = sourcePortValue;
+    forms.edit.elements.destinationAddress.value = isAnyValue(rule.destination) ? '' : normalizeValue(rule.destination);
+    const destinationPortValue = isAnyValue(rule.destination_port) ? '' : normalizeValue(rule.destination_port);
+    forms.edit.elements.destinationPort.value = destinationPortValue;
     forms.edit.elements.disabled.checked = Boolean(rule.disabled);
 
-    applyPresetForRule(forms.edit, 'source', rule.source_port || '', normalizedProtocol);
-    applyPresetForRule(forms.edit, 'destination', rule.destination_port || '', normalizedProtocol);
+    applyPresetForRule(forms.edit, 'source', sourcePortValue, normalizedProtocol);
+    applyPresetForRule(forms.edit, 'destination', destinationPortValue, normalizedProtocol);
     if (allowedPortProtocols.includes(normalizedProtocol)) {
       setProtocolValue(forms.edit, normalizedProtocol, { force: true });
     }
@@ -1438,6 +1399,14 @@ const FirewallRulesView = (() => {
 
     const disableFlag = toggleAction === 'disable';
     try {
+      toggleButtonLoading(
+        confirmButtons.disable,
+        confirmSpinners.disableSpinner,
+        confirmSpinners.disableLabel,
+        true,
+        'Confirm',
+        disableFlag ? 'Disabling...' : 'Enabling...',
+      );
       const data = await performRequest(
         `/firewall/rules/api/names/${encodeName(firewallName)}/rules/${encodeURIComponent(ruleNumber)}/toggle`,
         {
@@ -1451,6 +1420,15 @@ const FirewallRulesView = (() => {
     } catch (error) {
       console.error(error);
       alert(error.message || 'Failed to toggle firewall rule state.');
+    } finally {
+      toggleButtonLoading(
+        confirmButtons.disable,
+        confirmSpinners.disableSpinner,
+        confirmSpinners.disableLabel,
+        false,
+        'Confirm',
+        disableFlag ? 'Disabling...' : 'Enabling...',
+      );
     }
   }
 
@@ -1551,6 +1529,18 @@ const FirewallRulesView = (() => {
   }
 
   function init() {
+    fwState.initializeDomReferences();
+    modals = fwState.modals;
+    forms = fwState.forms;
+    formButtons = fwState.formButtons;
+    confirmButtons = fwState.confirmButtons;
+    confirmSpinners = fwState.confirmSpinners;
+    infoLabels = fwState.infoLabels;
+    reorderControls = fwState.reorderControls;
+    reorderSpinner = fwState.reorderSpinner;
+    reorderSaveLabel = fwState.reorderSaveLabel;
+    dragState = fwState.dragState;
+
     bindModalCloseHandlers();
     bindFormHandlers();
     bindReorderButtons();
@@ -1560,9 +1550,5 @@ const FirewallRulesView = (() => {
     resetAddForm();
   }
 
-  return { init };
-})();
-
-document.addEventListener('DOMContentLoaded', () => {
-  FirewallRulesView.init();
-});
+  firewallNs.controller = { init };
+})(window);

@@ -95,9 +95,10 @@ def split_port_list(value: Optional[str]) -> List[str]:
     return items
 
 
-def _port_command_key(token: str) -> str:
-    cleaned = token.replace("-", "")
-    return "port" if cleaned.isdigit() else "port-name"
+def _append_port_commands(commands: List[List[str]], base: List[str], side: str, tokens: List[str]):
+    if not tokens:
+        return
+    commands.append(base + [side, "port", ",".join(tokens)])
 
 
 def build_rule_set_commands(firewall_name: str, rule_number: int, payload: Dict[str, Any]) -> List[List[str]]:
@@ -120,15 +121,17 @@ def build_rule_set_commands(firewall_name: str, rule_number: int, payload: Dict[
     if src_addr:
         commands.append(base + ["source", "address", src_addr])
 
-    for token in split_port_list(payload.get("sourcePort")):
-        commands.append(base + ["source", _port_command_key(token), token])
+    src_tokens = split_port_list(payload.get("sourcePort"))
+    if src_tokens:
+        _append_port_commands(commands, base, "source", src_tokens)
 
     dst_addr = (payload.get("destinationAddress") or "").strip()
     if dst_addr:
         commands.append(base + ["destination", "address", dst_addr])
 
-    for token in split_port_list(payload.get("destinationPort")):
-        commands.append(base + ["destination", _port_command_key(token), token])
+    dst_tokens = split_port_list(payload.get("destinationPort"))
+    if dst_tokens:
+        _append_port_commands(commands, base, "destination", dst_tokens)
 
     disabled = payload.get("disabled")
     if isinstance(disabled, str):

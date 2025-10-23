@@ -10,11 +10,14 @@ export function bindDeleteModal() {
     btn.addEventListener('click', () => openDeleteModal(btn));
   });
 
-  if (elements.cancelDeleteBtn) {
-    elements.cancelDeleteBtn.addEventListener('click', () => {
-      elements.deleteModal.classList.add('hidden');
-      state.deleteTarget = null;
-    });
+  elements.deleteModal.addEventListener('click', (event) => {
+    if (event.target === elements.deleteModal) {
+      closeDeleteModal();
+    }
+  });
+
+  if (elements.deleteCloseButtons && elements.deleteCloseButtons.length) {
+    elements.deleteCloseButtons.forEach((btn) => btn.addEventListener('click', closeDeleteModal));
   }
 
   if (elements.confirmDeleteBtn) {
@@ -24,10 +27,56 @@ export function bindDeleteModal() {
 
 function openDeleteModal(btn) {
   state.deleteTarget = btn.dataset.iface;
+  const zone = btn.dataset.zone || 'Unassigned';
+  const address = btn.dataset.address || 'N/A';
+  const description = btn.dataset.description || 'None';
+
   if (elements.deleteIfaceName) {
     elements.deleteIfaceName.textContent = state.deleteTarget || '--';
   }
+  if (elements.deleteInterfaceValue) {
+    elements.deleteInterfaceValue.textContent = state.deleteTarget || '--';
+  }
+  if (elements.deleteZoneValue) {
+    elements.deleteZoneValue.textContent = zone;
+  }
+  if (elements.deleteAddressValue) {
+    elements.deleteAddressValue.textContent = address || 'N/A';
+  }
+  if (elements.deleteDescriptionValue) {
+    elements.deleteDescriptionValue.textContent = description || 'None';
+  }
+  toggleButtonLoading(
+    elements.confirmDeleteBtn,
+    elements.deleteSpinner,
+    elements.deleteSubmitLabel,
+    false,
+    'Delete',
+    'Deleting...'
+  );
+
   elements.deleteModal.classList.remove('hidden');
+  setTimeout(() => {
+    if (elements.confirmDeleteBtn) {
+      elements.confirmDeleteBtn.focus();
+    }
+  }, 0);
+}
+
+function closeDeleteModal() {
+  if (!elements.deleteModal) {
+    return;
+  }
+  elements.deleteModal.classList.add('hidden');
+  state.deleteTarget = null;
+  toggleButtonLoading(
+    elements.confirmDeleteBtn,
+    elements.deleteSpinner,
+    elements.deleteSubmitLabel,
+    false,
+    'Delete',
+    'Deleting...'
+  );
 }
 
 async function submitDelete() {
@@ -50,6 +99,7 @@ async function submitDelete() {
     });
 
     if (result.status === 'ok') {
+      closeDeleteModal();
       window.location.reload();
       return;
     }

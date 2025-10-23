@@ -1,0 +1,54 @@
+{% import 'firewall/rules/_macros.html' as rules_macros %}
+
+<div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+  <div class="px-4 py-3 border-b border-gray-700 flex flex-wrap items-center justify-between gap-2">
+    <h3 class="text-lg font-semibold text-white">Firewall Rules</h3>
+    <div class="flex items-center gap-2">
+      <div id="reorderControls" class="hidden flex items-center gap-2 mr-2">
+        <button id="reorderCancel"
+          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-sm rounded text-white">
+          Cancel
+        </button>
+        <button id="reorderSave"
+          class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded text-white inline-flex items-center gap-2">
+          <span class="material-icons text-sm animate-spin hidden" id="reorderSpinner">refresh</span>
+          <span id="reorderSaveLabel">Save Order</span>
+        </button>
+      </div>
+      <button id="createFirewallRule"
+        class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-sm rounded text-white">
+        <span class="material-icons text-sm">add</span>
+        Add Rule
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm text-gray-200" id="firewallRulesTable">
+      <thead class="bg-gray-800 text-gray-400 uppercase text-xs tracking-wider">
+        <tr>
+          <th class="px-4 py-3 text-left">Rule #</th>
+          <th class="px-4 py-3 text-left">Protocol</th>
+          <th class="px-4 py-3 text-left">Source</th>
+          <th class="px-4 py-3 text-left">Src Port</th>
+          <th class="px-4 py-3 text-left">Destination</th>
+          <th class="px-4 py-3 text-left">Dst Port</th>
+          <th class="px-4 py-3 text-left">Description</th>
+          <th class="px-4 py-3 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="firewallRulesBody">
+        {% if initial_rules %}
+          {% for rule in initial_rules %}
+            {{ rules_macros.rule_row(rule, action_meta) }}
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" class="px-4 py-6 text-center text-gray-400">
+              No rules defined for this firewall.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>

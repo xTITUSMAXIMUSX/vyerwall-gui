@@ -117,6 +117,9 @@
           <span
             class="material-icons text-gray-400 hover:text-red-600 cursor-pointer delete-btn"
             data-iface="{{ name }}"
+            data-zone="{{ info.zone or '' }}"
+            data-address="{{ info.config_address or (info.inet[0] if info.inet else '') }}"
+            data-description="{{ info.description or '' }}"
             title="Delete Interface"
           >
             delete

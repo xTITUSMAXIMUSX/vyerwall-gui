@@ -1,0 +1,45 @@
+{% macro rule_row(rule, action_meta) -%}
+  {%- set proto_norm = (rule.protocol or '')|lower -%}
+  {%- set protocol_display = 'All' if proto_norm in ['all', 'any', ''] else (rule.protocol or 'Any') -%}
+  {%- set source_display = rule.source if rule.source and rule.source|lower != 'any' else 'Any' -%}
+  {%- set source_port_display = rule.source_port if rule.source_port is not none and rule.source_port|string|trim != '' and rule.source_port|string|lower != 'any' else 'Any' -%}
+  {%- set dest_display = rule.destination if rule.destination and rule.destination|lower != 'any' else 'Any' -%}
+  {%- set dest_port_display = rule.destination_port if rule.destination_port is not none and rule.destination_port|string|trim != '' and rule.destination_port|string|lower != 'any' else 'Any' -%}
+  {%- set action_info = action_meta.get((rule.action or '')|lower, action_meta['default']) -%}
+  <tr class="border-t border-gray-800 transition-colors{% if rule.disabled %} bg-yellow-500/10 disabled-firewall-rule{% endif %}"
+      data-disabled="{{ 'true' if rule.disabled else 'false' }}">
+    <td class="px-4 py-3 font-mono text-gray-100">
+      <div class="flex items-center gap-2">
+        <span class="material-icons text-gray-500 text-base drag-handle">drag_indicator</span>
+        <span class="material-icons text-base {{ action_info.class }}" title="{{ action_info.label }}">{{ action_info.icon }}</span>
+        <span class="sr-only">{{ action_info.label }}</span>
+        {{ rule.number }}
+      </div>
+    </td>
+    <td class="px-4 py-3">{{ protocol_display }}</td>
+    <td class="px-4 py-3">{{ source_display }}</td>
+    <td class="px-4 py-3">{{ source_port_display }}</td>
+    <td class="px-4 py-3">{{ dest_display }}</td>
+    <td class="px-4 py-3">{{ dest_port_display }}</td>
+    <td class="px-4 py-3">{{ rule.description or '-' }}</td>
+    <td class="px-4 py-3">
+      <div class="flex items-center gap-2 text-sm">
+        <button class="text-blue-400 hover:text-blue-300 btn-rule-edit flex items-center gap-1"
+                data-rule-number="{{ rule.number }}">
+          <span class="material-icons text-base">edit</span>
+          <span class="sr-only">Edit</span>
+        </button>
+        <button class="text-red-400 hover:text-red-300 btn-rule-delete flex items-center gap-1"
+                data-rule-number="{{ rule.number }}">
+          <span class="material-icons text-base">delete</span>
+          <span class="sr-only">Delete</span>
+        </button>
+        <button class="btn-rule-disable flex items-center gap-1 {{ 'text-green-400 hover:text-green-300' if rule.disabled else 'text-yellow-400 hover:text-yellow-300' }}"
+                data-rule-number="{{ rule.number }}">
+          <span class="material-icons text-base">{{ rule.disabled and 'check_circle' or 'block' }}</span>
+          <span class="sr-only">{{ rule.disabled and 'Enable' or 'Disable' }}</span>
+        </button>
+      </div>
+    </td>
+  </tr>
+{%- endmacro %}

@@ -1,0 +1,35 @@
+<aside class="w-[14rem] bg-gray-900 border-r border-gray-700">
+  <h3 class="text-lg font-semibold p-4 border-b border-gray-700">Zone Pairs</h3>
+  <ul class="divide-y divide-gray-700" id="firewallPairList">
+    {% if initial_zone %}
+      {% set zone_pairs = firewall_zone_groups.get(initial_zone, []) %}
+      {% if zone_pairs %}
+        {% for pair in zone_pairs %}
+        {% set pair_meta = firewall_metadata.get(pair.name, {}) %}
+        <li>
+          <button
+            class="w-full text-left px-4 py-3 flex items-center justify-between rounded firewall-pair-item {{ 'bg-gray-700' if pair.name == initial_name else 'hover:bg-gray-700' }}"
+            data-firewall-name="{{ pair.name }}"
+            data-zone="{{ initial_zone }}"
+          >
+            <div class="flex flex-col leading-tight">
+              <span class="font-semibold text-white">{{ pair.name }}</span>
+              <span class="text-xs text-indigo-300 uppercase tracking-wide">
+                {{ pair_meta.zone_label or (initial_zone ~ ' -> ' ~ (pair.destination or '')) }}
+              </span>
+              {% if pair_meta.description %}
+              <span class="text-xs text-gray-400">{{ pair_meta.description }}</span>
+              {% endif %}
+            </div>
+            <span class="material-icons text-sm text-gray-400">chevron_right</span>
+          </button>
+        </li>
+        {% endfor %}
+      {% else %}
+        <li class="p-4 text-sm text-gray-400">No firewall rule sets for {{ initial_zone }}.</li>
+      {% endif %}
+    {% else %}
+    <li class="p-4 text-sm text-gray-400">No firewall rule sets available.</li>
+    {% endif %}
+  </ul>
+</aside>
