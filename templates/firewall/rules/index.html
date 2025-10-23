@@ -1,0 +1,571 @@
+{% extends 'base.html' %}
+{% block title %}Firewall Rules{% endblock %}
+{% set active = 'firewall' %}
+{% block header %}Firewall Rules{% endblock %}
+
+{% set initial_meta = initial_details.metadata if initial_details else {} %}
+{% set initial_rules = initial_details.rules if initial_details else [] %}
+{% set protocol_options = [
+  'all', 'tcp_udp', 'ah', 'ax.25', 'dccp', 'ddp', 'egp', 'eigrp', 'encap',
+  'esp', 'etherip', 'ethernet', 'fc', 'ggp', 'gre', 'hip', 'hmp', 'hopopt',
+  'icmp', 'idpr-cmtp', 'idrp', 'igmp', 'igp', 'ip', 'ipcomp', 'ipencap', 'ipip',
+  'ipv6', 'ipv6-frag', 'ipv6-icmp', 'ipv6-nonxt', 'ipv6-opts', 'ipv6-route',
+  'isis', 'iso-tp4', 'l2tp', 'manet', 'mobility-header', 'mpls-in-ip', 'mptcp',
+  'ospf', 'pim', 'pup', 'rdp', 'rohc', 'rspf', 'rsvp', 'sctp', 'shim6', 'skip',
+  'st', 'tcp', 'udp', 'udplite', 'vmtp', 'vrrp', 'wesp', 'xns-idp', 'xtp'
+] %}
+{% set named_ports = [
+  {'label': 'ftp (21/tcp)', 'value': '21', 'protocol': 'tcp'},
+  {'label': 'ssh (22/tcp)', 'value': '22', 'protocol': 'tcp'},
+  {'label': 'telnet (23/tcp)', 'value': '23', 'protocol': 'tcp'},
+  {'label': 'smtp (25/tcp)', 'value': '25', 'protocol': 'tcp'},
+  {'label': 'dns (53/tcp)', 'value': '53', 'protocol': 'tcp'},
+  {'label': 'dns (53/udp)', 'value': '53', 'protocol': 'udp'},
+  {'label': 'http (80/tcp)', 'value': '80', 'protocol': 'tcp'},
+  {'label': 'https (443/tcp)', 'value': '443', 'protocol': 'tcp'},
+  {'label': 'ntp (123/udp)', 'value': '123', 'protocol': 'udp'},
+  {'label': 'pop3 (110/tcp)', 'value': '110', 'protocol': 'tcp'},
+  {'label': 'imap (143/tcp)', 'value': '143', 'protocol': 'tcp'},
+  {'label': 'ldap (389/tcp)', 'value': '389', 'protocol': 'tcp'},
+  {'label': 'ldaps (636/tcp)', 'value': '636', 'protocol': 'tcp'},
+  {'label': 'sqlnet (1521/tcp)', 'value': '1521', 'protocol': 'tcp'},
+  {'label': 'ms-sql-s (1433/tcp)', 'value': '1433', 'protocol': 'tcp'},
+  {'label': 'rdp (3389/tcp)', 'value': '3389', 'protocol': 'tcp'},
+  {'label': 'ike (500/udp)', 'value': '500', 'protocol': 'udp'},
+  {'label': 'syslog (514/udp)', 'value': '514', 'protocol': 'udp'},
+  {'label': 'snmp (161/udp)', 'value': '161', 'protocol': 'udp'},
+  {'label': 'snmptrap (162/udp)', 'value': '162', 'protocol': 'udp'},
+  {'label': 'rdp-udp (3389/udp)', 'value': '3389', 'protocol': 'udp'},
+  {'label': 'poppassd (106/tcp)', 'value': '106', 'protocol': 'tcp'},
+  {'label': 'moira-db (775/tcp)', 'value': '775', 'protocol': 'tcp'},
+  {'label': 'moira-update (777/tcp)', 'value': '777', 'protocol': 'tcp'},
+  {'label': 'moira-ureg (779/udp)', 'value': '779', 'protocol': 'udp'},
+  {'label': 'spamd (783/tcp)', 'value': '783', 'protocol': 'tcp'},
+  {'label': 'skkserv (1178/tcp)', 'value': '1178', 'protocol': 'tcp'},
+  {'label': 'predict (1210/udp)', 'value': '1210', 'protocol': 'udp'},
+  {'label': 'rmtcfg (1236/tcp)', 'value': '1236', 'protocol': 'tcp'},
+  {'label': 'xtel (1313/tcp)', 'value': '1313', 'protocol': 'tcp'},
+  {'label': 'xtelw (1314/tcp)', 'value': '1314', 'protocol': 'tcp'},
+  {'label': 'zebrasrv (2600/tcp)', 'value': '2600', 'protocol': 'tcp'},
+  {'label': 'zebra (2601/tcp)', 'value': '2601', 'protocol': 'tcp'},
+  {'label': 'ripd (2602/tcp)', 'value': '2602', 'protocol': 'tcp'},
+  {'label': 'ripngd (2603/tcp)', 'value': '2603', 'protocol': 'tcp'},
+  {'label': 'ospfd (2604/tcp)', 'value': '2604', 'protocol': 'tcp'},
+  {'label': 'bgpd (2605/tcp)', 'value': '2605', 'protocol': 'tcp'},
+  {'label': 'ospf6d (2606/tcp)', 'value': '2606', 'protocol': 'tcp'},
+  {'label': 'ospfapi (2607/tcp)', 'value': '2607', 'protocol': 'tcp'},
+  {'label': 'isisd (2608/tcp)', 'value': '2608', 'protocol': 'tcp'},
+  {'label': 'fax (4557/tcp)', 'value': '4557', 'protocol': 'tcp'},
+  {'label': 'hylafax (4559/tcp)', 'value': '4559', 'protocol': 'tcp'},
+  {'label': 'munin (4949/tcp)', 'value': '4949', 'protocol': 'tcp'},
+  {'label': 'rplay (5555/udp)', 'value': '5555', 'protocol': 'udp'},
+  {'label': 'nrpe (5666/tcp)', 'value': '5666', 'protocol': 'tcp'},
+  {'label': 'nsca (5667/tcp)', 'value': '5667', 'protocol': 'tcp'},
+  {'label': 'canna (5680/tcp)', 'value': '5680', 'protocol': 'tcp'},
+  {'label': 'syslog-tls (6514/tcp)', 'value': '6514', 'protocol': 'tcp'},
+  {'label': 'sane-port (6566/tcp)', 'value': '6566', 'protocol': 'tcp'},
+  {'label': 'ircd (6667/tcp)', 'value': '6667', 'protocol': 'tcp'},
+  {'label': 'zope-ftp (8021/tcp)', 'value': '8021', 'protocol': 'tcp'},
+  {'label': 'tproxy (8081/tcp)', 'value': '8081', 'protocol': 'tcp'},
+  {'label': 'omniorb (8088/tcp)', 'value': '8088', 'protocol': 'tcp'},
+  {'label': 'clc-build-daemon (8990/tcp)', 'value': '8990', 'protocol': 'tcp'},
+  {'label': 'xinetd (9098/tcp)', 'value': '9098', 'protocol': 'tcp'},
+  {'label': 'git (9418/tcp)', 'value': '9418', 'protocol': 'tcp'},
+  {'label': 'zope (9673/tcp)', 'value': '9673', 'protocol': 'tcp'},
+  {'label': 'webmin (10000/tcp)', 'value': '10000', 'protocol': 'tcp'},
+  {'label': 'kamanda (10081/tcp)', 'value': '10081', 'protocol': 'tcp'},
+  {'label': 'amandaidx (10082/tcp)', 'value': '10082', 'protocol': 'tcp'},
+  {'label': 'amidxtape (10083/tcp)', 'value': '10083', 'protocol': 'tcp'},
+  {'label': 'sgi-cmsd (17001/udp)', 'value': '17001', 'protocol': 'udp'},
+  {'label': 'sgi-crsd (17002/udp)', 'value': '17002', 'protocol': 'udp'},
+  {'label': 'sgi-gcd (17003/udp)', 'value': '17003', 'protocol': 'udp'},
+  {'label': 'sgi-cad (17004/tcp)', 'value': '17004', 'protocol': 'tcp'},
+  {'label': 'binkp (24554/tcp)', 'value': '24554', 'protocol': 'tcp'},
+  {'label': 'asp (27374/tcp)', 'value': '27374', 'protocol': 'tcp'},
+  {'label': 'asp (27374/udp)', 'value': '27374', 'protocol': 'udp'},
+  {'label': 'csync2 (30865/tcp)', 'value': '30865', 'protocol': 'tcp'},
+  {'label': 'dircproxy (57000/tcp)', 'value': '57000', 'protocol': 'tcp'},
+  {'label': 'tfido (60177/tcp)', 'value': '60177', 'protocol': 'tcp'},
+  {'label': 'fido (60179/tcp)', 'value': '60179', 'protocol': 'tcp'}
+] %}
+
+{% block content %}
+<div class="bg-gray-800 rounded-xl shadow flex overflow-hidden min-h-[28rem]">
+  <aside class="w-48 bg-gray-900 border-r border-gray-700">
+    <div class="flex items-center justify-between p-4 border-b border-gray-700 gap-2">
+      <h3 class="text-lg font-semibold text-white">Zones</h3>
+      <button id="createZoneButton"
+        class="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white">
+        <span class="material-icons text-sm">add</span>
+        New
+      </button>
+    </div>
+    <div class="p-4 text-sm text-gray-400{% if firewall_zone_list %} hidden{% endif %}" id="firewallZoneEmpty">
+      No firewall zones detected.
+    </div>
+    <ul class="divide-y divide-gray-700{% if not firewall_zone_list %} hidden{% endif %}" id="firewallZoneList">
+      {% if firewall_zone_list %}
+        {% for zone in firewall_zone_list %}
+        <li>
+          <button
+            class="w-full text-left px-4 py-3 flex items-center gap-2 firewall-zone-item {{ 'bg-gray-700' if zone == initial_zone else 'hover:bg-gray-700' }}"
+            data-zone="{{ zone }}"
+          >
+            <span class="material-icons text-blue-400 text-sm">layers</span>
+            <span class="truncate">{{ zone }}</span>
+          </button>
+        </li>
+        {% endfor %}
+      {% endif %}
+    </ul>
+  </aside>
+
+  <aside class="w-72 bg-gray-900 border-r border-gray-700">
+    <h3 class="text-lg font-semibold p-4 border-b border-gray-700">Zone Pairs</h3>
+    <ul class="divide-y divide-gray-700" id="firewallPairList">
+      {% if initial_zone %}
+        {% set zone_pairs = firewall_zone_groups.get(initial_zone, []) %}
+        {% if zone_pairs %}
+          {% for pair in zone_pairs %}
+          {% set pair_meta = firewall_metadata.get(pair.name, {}) %}
+          <li>
+            <button
+              class="w-full text-left px-4 py-3 flex items-center justify-between rounded firewall-pair-item {{ 'bg-gray-700' if pair.name == initial_name else 'hover:bg-gray-700' }}"
+              data-firewall-name="{{ pair.name }}"
+              data-zone="{{ initial_zone }}"
+            >
+              <div class="flex flex-col leading-tight">
+                <span class="font-semibold text-white">{{ pair.name }}</span>
+                <span class="text-xs text-indigo-300 uppercase tracking-wide">
+                  {{ pair_meta.zone_label or (initial_zone ~ ' -> ' ~ (pair.destination or '')) }}
+                </span>
+                {% if pair_meta.description %}
+                <span class="text-xs text-gray-400">{{ pair_meta.description }}</span>
+                {% endif %}
+              </div>
+              <span class="material-icons text-sm text-gray-400">chevron_right</span>
+            </button>
+          </li>
+          {% endfor %}
+        {% else %}
+          <li class="p-4 text-sm text-gray-400">No firewall rule sets for {{ initial_zone }}.</li>
+        {% endif %}
+      {% else %}
+      <li class="p-4 text-sm text-gray-400">No firewall rule sets available.</li>
+      {% endif %}
+    </ul>
+  </aside>
+
+  <section class="flex-1 p-6 space-y-6">
+    <div class="border border-gray-700 rounded-xl p-4 bg-gray-900">
+      <h2 class="text-xl font-semibold text-white mb-2" id="firewallTitle">
+        {% if initial_name %}{{ initial_name }}{% else %}No Firewall Selected{% endif %}
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm text-gray-300">
+        <div>
+          <span class="text-gray-400 block">Description</span>
+          <span id="firewallDescription">
+            {% if initial_meta.description %}
+              {{ initial_meta.description }}
+            {% else %}
+              <span class="text-gray-500">None</span>
+            {% endif %}
+          </span>
+        </div>
+        <div>
+          <span class="text-gray-400 block">Zone Pair</span>
+          <span id="firewallZonePair">
+            {% if initial_meta.zone_label %}
+              {{ initial_meta.zone_label }}
+            {% else %}
+              <span class="text-gray-500">Unassigned</span>
+            {% endif %}
+          </span>
+        </div>
+        <div>
+          <span class="text-gray-400 block">Default Action</span>
+          <span id="firewallDefaultAction">{{ initial_meta.default_action or 'accept' }}</span>
+        </div>
+        <div>
+          <span class="text-gray-400 block">Rule Count</span>
+          <span id="firewallRuleCount">{{ initial_rules|length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-700 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-lg font-semibold text-white">Firewall Rules</h3>
+        <div class="flex items-center gap-2">
+          <div id="reorderControls" class="hidden flex items-center gap-2 mr-2">
+            <button id="reorderCancel"
+              class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-sm rounded text-white">
+              Cancel
+            </button>
+            <button id="reorderSave"
+              class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded text-white inline-flex items-center gap-2">
+              <span class="material-icons text-sm animate-spin hidden" id="reorderSpinner">refresh</span>
+              <span id="reorderSaveLabel">Save Order</span>
+            </button>
+          </div>
+          <button id="createFirewallRule"
+            class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-sm rounded text-white">
+            <span class="material-icons text-sm">add</span>
+            Add Rule
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-gray-200" id="firewallRulesTable">
+          <thead class="bg-gray-800 text-gray-400 uppercase text-xs tracking-wider">
+            <tr>
+              <th class="px-4 py-3 text-left">Rule #</th>
+              <th class="px-4 py-3 text-left">Protocol</th>
+              <th class="px-4 py-3 text-left">Source</th>
+              <th class="px-4 py-3 text-left">Src Port</th>
+              <th class="px-4 py-3 text-left">Destination</th>
+              <th class="px-4 py-3 text-left">Dst Port</th>
+              <th class="px-4 py-3 text-left">Description</th>
+              <th class="px-4 py-3 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="firewallRulesBody">
+            {% if initial_rules %}
+              {% for rule in initial_rules %}
+              <tr class="border-t border-gray-800 transition-colors{% if rule.disabled %} bg-yellow-500/10 disabled-firewall-rule{% endif %}" data-disabled="{{ 'true' if rule.disabled else 'false' }}">
+                <td class="px-4 py-3 font-mono text-gray-100">{{ rule.number }}</td>
+                <td class="px-4 py-3">{{ rule.protocol }}</td>
+                <td class="px-4 py-3">{{ rule.source }}</td>
+                <td class="px-4 py-3">{{ rule.source_port }}</td>
+                <td class="px-4 py-3">{{ rule.destination }}</td>
+                <td class="px-4 py-3">{{ rule.destination_port }}</td>
+                <td class="px-4 py-3">{{ rule.description or '-' }}</td>
+                <td class="px-4 py-3">
+          <div class="flex items-center gap-2 text-sm">
+            <button class="text-blue-400 hover:text-blue-300 btn-rule-edit flex items-center gap-1"
+              data-rule-number="{{ rule.number }}">
+              <span class="material-icons text-base">edit</span>
+              <span class="sr-only">Edit</span>
+            </button>
+            <button class="text-red-400 hover:text-red-300 btn-rule-delete flex items-center gap-1"
+              data-rule-number="{{ rule.number }}">
+              <span class="material-icons text-base">delete</span>
+              <span class="sr-only">Delete</span>
+            </button>
+            <button class="btn-rule-disable flex items-center gap-1 {{ 'text-green-400 hover:text-green-300' if rule.disabled else 'text-yellow-400 hover:text-yellow-300' }}"
+              data-rule-number="{{ rule.number }}">
+              <span class="material-icons text-base">{{ rule.disabled and 'check_circle' or 'block' }}</span>
+              <span class="sr-only">{{ rule.disabled and 'Enable' or 'Disable' }}</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="8" class="px-4 py-6 text-center text-gray-400">
+                  No rules defined for this firewall.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  window.FIREWALL_RULES_VIEW_DATA = {
+    names: {{ firewall_names | tojson }},
+    metadata: {{ firewall_metadata | tojson }},
+    zoneGroups: {{ firewall_zone_groups | tojson }},
+    initialZone: {{ initial_zone | tojson }},
+    initialName: {{ initial_name | tojson }},
+    initialDetails: {{ initial_details | tojson }},
+    initialInterfaces: {{ initial_interfaces | tojson }}
+  };
+</script>
+
+<!-- Create Zone Modal -->
+<div id="createZoneModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-gray-900 rounded-xl shadow-lg w-[24rem] p-6 border border-gray-700">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-semibold text-white">Create Firewall Zone</h3>
+      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="createZoneModal">close</button>
+    </div>
+    <form id="createZoneForm" class="space-y-4">
+      <div class="space-y-1">
+        <label for="createZoneName" class="block text-sm text-gray-300 mb-1">Zone Name</label>
+        <input id="createZoneName" name="zoneName" type="text" required maxlength="32" placeholder="e.g. NEW"
+          class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none uppercase tracking-wide">
+        <p class="text-xs text-gray-500 mt-1">Zone names are normalised to uppercase and may include letters, numbers, hyphens, or underscores.</p>
+      </div>
+      <div class="space-y-1">
+        <label for="createZoneInterface" class="block text-sm text-gray-300">Assign Interface</label>
+        <select id="createZoneInterface" name="interface"
+          class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+          <option value="">Do not assign</option>
+        </select>
+        <p id="createZoneInterfaceHint" class="text-xs text-gray-500">Select an unassigned interface to attach to the new zone.</p>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="px-3 py-1.5 text-sm rounded bg-gray-700 hover:bg-gray-600 text-white"
+          data-close-modal="createZoneModal">Cancel</button>
+        <button type="submit" id="createZoneSubmit"
+          class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-sm rounded text-white">
+          <span class="material-icons text-sm animate-spin hidden" id="createZoneSpinner">refresh</span>
+          <span id="createZoneSubmitLabel">Create Zone</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Rule Modal -->
+<div id="addRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-gray-900 rounded-xl shadow-lg w-[32rem] p-6 border border-gray-700">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-semibold text-white">Add Firewall Rule</h3>
+      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="addRuleModal">close</button>
+    </div>
+    <form id="addRuleForm" class="space-y-4">
+      <input type="hidden" name="number">
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Action</label>
+        <select name="action" required
+          class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+          <option value="accept">Accept</option>
+          <option value="drop">Drop</option>
+          <option value="reject">Reject</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Protocol</label>
+          <select name="protocol"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            <option value="tcp_udp" selected>tcp_udp</option>
+            {% for proto in protocol_options %}
+            <option value="{{ proto }}">{{ proto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Description</label>
+          <input type="text" name="description" placeholder="Rule description"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Source Address</label>
+          <input type="text" name="sourceAddress" placeholder="0.0.0.0/0"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Source Port</label>
+          <div class="space-y-2">
+            <select data-port-select="source"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              <option value="other" data-protocol="" selected>Other</option>
+              {% for port in named_ports %}
+              <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="sourcePort" data-port-input="source" placeholder="telnet,http,123,1001-1005"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Destination Address</label>
+          <input type="text" name="destinationAddress" placeholder="0.0.0.0/0"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Destination Port</label>
+          <div class="space-y-2">
+            <select data-port-select="destination"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              <option value="other" data-protocol="" selected>Other</option>
+              {% for port in named_ports %}
+              <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="destinationPort" data-port-input="destination" placeholder="telnet,http,123,1001-1005"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+          data-close-modal="addRuleModal">Cancel</button>
+        <button type="submit" id="addRuleSubmit"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white inline-flex items-center gap-2">
+          <span class="material-icons text-sm animate-spin hidden" id="addRuleSpinner">refresh</span>
+          <span id="addRuleSubmitLabel">Create Rule</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Rule Modal -->
+<div id="editRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-gray-900 rounded-xl shadow-lg w-[32rem] p-6 border border-gray-700">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-semibold text-white">Edit Firewall Rule</h3>
+      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="editRuleModal">close</button>
+    </div>
+    <form id="editRuleForm" class="space-y-4">
+      <input type="hidden" name="originalNumber">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Rule Number</label>
+          <input type="number" name="number" min="1" required
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Action</label>
+          <select name="action" required
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            <option value="accept">Accept</option>
+            <option value="drop">Drop</option>
+            <option value="reject">Reject</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Protocol</label>
+          <select name="protocol"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            <option value="">Any</option>
+            {% for proto in protocol_options %}
+            <option value="{{ proto }}">{{ proto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Description</label>
+          <input type="text" name="description"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Source Address</label>
+          <input type="text" name="sourceAddress"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Source Port</label>
+          <div class="space-y-2">
+            <select data-port-select="source"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              <option value="other" data-protocol="" selected>Other</option>
+              {% for port in named_ports %}
+              <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="sourcePort" data-port-input="source" placeholder="telnet,http,123,1001-1005"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Destination Address</label>
+          <input type="text" name="destinationAddress"
+            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Destination Port</label>
+          <div class="space-y-2">
+            <select data-port-select="destination"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              <option value="other" data-protocol="" selected>Other</option>
+              {% for port in named_ports %}
+              <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="destinationPort" data-port-input="destination" placeholder="telnet,http,123,1001-1005"
+              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="editRuleDisabled" name="disabled"
+          class="h-4 w-4 text-blue-500 bg-gray-800 border border-gray-600 rounded">
+        <label for="editRuleDisabled" class="text-sm text-gray-300 select-none">Disable rule</label>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+          data-close-modal="editRuleModal">Cancel</button>
+        <button type="submit" id="editRuleSubmit"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white inline-flex items-center gap-2">
+          <span class="material-icons text-sm animate-spin hidden" id="editRuleSpinner">refresh</span>
+          <span id="editRuleSubmitLabel">Save Changes</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Rule Modal -->
+<div id="deleteRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-gray-900 rounded-xl shadow-lg w-[26rem] p-6 border border-gray-700">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-semibold text-white">Delete Firewall Rule</h3>
+      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="deleteRuleModal">close</button>
+    </div>
+    <p class="text-gray-300 mb-6" id="deleteRuleMessage">
+      Are you sure you want to delete rule <span class="font-semibold">--</span>?
+    </p>
+    <div class="flex justify-end gap-3">
+      <button class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+        data-close-modal="deleteRuleModal">Cancel</button>
+      <button id="confirmDeleteRule"
+        class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white inline-flex items-center gap-2">
+        <span class="material-icons text-sm animate-spin hidden" id="deleteRuleSpinner">refresh</span>
+        <span id="deleteRuleSubmitLabel">Delete</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Disable Rule Modal -->
+<div id="disableRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-gray-900 rounded-xl shadow-lg w-[26rem] p-6 border border-gray-700">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-semibold text-white">Toggle Rule State</h3>
+      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="disableRuleModal">close</button>
+    </div>
+    <p class="text-gray-300 mb-6" id="disableRuleMessage">
+      Are you sure you want to disable rule <span class="font-semibold">--</span>?
+    </p>
+    <div class="flex justify-end gap-3">
+      <button class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+        data-close-modal="disableRuleModal">Cancel</button>
+      <button id="confirmDisableRule" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded text-gray-900 font-semibold">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/firewall-rules.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,129 @@
+<table class="w-full text-left border-collapse text-gray-200 text-base">
+  <thead class="border-b border-gray-700 text-gray-400">
+    <tr>
+      <th class="py-2">Name</th>
+      <th class="py-2">Status</th>
+      <th class="py-2">Mode</th>
+      <th class="py-2">Address</th>
+      <th class="py-2">In</th>
+      <th class="py-2">Out</th>
+      <th class="py-2">Error</th>
+      <th class="py-2 text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for name, info in interfaces.items() %}
+    <tr class="border-b border-gray-700/50 hover:bg-gray-700/30">
+      <td class="py-3 font-semibold">
+        <div class="flex items-center gap-3">
+          <span class="material-icons text-blue-400">settings_ethernet</span>
+          <div class="flex flex-col leading-tight">
+            <span>{{ name }}</span>
+            {% if info.description %}
+            <span class="text-sm font-normal text-gray-400">{{ info.description }}</span>
+            {% endif %}
+            <span class="text-xs uppercase tracking-wide text-indigo-300 iface-zone">
+              {% if info.zone %}
+              Zone: {{ info.zone }}
+              {% else %}
+              Zone: Unassigned
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </td>
+      <td class="py-3 iface-status">
+        {% if info.state == "UP" %}
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-green-500 text-sm">circle</span>
+          Active
+        </div>
+        {% else %}
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-red-500 text-sm">circle</span>
+          Down
+        </div>
+        {% endif %}
+      </td>
+      <td class="py-3 iface-mode">
+        {% if info.address_mode == "dhcp" %}
+        DHCP
+        {% elif info.address_mode == "static" %}
+        Static
+        {% else %}
+        <span class="text-gray-500">N/A</span>
+        {% endif %}
+      </td>
+      <td class="py-3 iface-address">
+        {% if info.inet %}
+        {{ info.inet[0] }}
+        {% else %}
+        <span class="text-gray-500">N/A</span>
+        {% endif %}
+      </td>
+      <td class="py-3">{{ info.rx.bytes or "0" }}</td>
+      <td class="py-3">{{ info.tx.bytes or "0" }}</td>
+      <td class="py-3">
+        {% set rx_err = info.rx.errors|default("0")|int %}
+        {% set tx_err = info.tx.errors|default("0")|int %}
+        {% set total_err = rx_err + tx_err %}
+        {% if total_err > 0 %}
+        <div class="flex items-center gap-1 text-red-500">
+          <span class="material-icons text-sm">error</span>
+          {{ total_err }}
+        </div>
+        {% else %}
+        0
+        {% endif %}
+      </td>
+      <td class="py-3 text-right">
+        <div class="flex justify-end gap-3">
+          <span
+            class="material-icons text-gray-400 hover:text-blue-400 cursor-pointer edit-btn"
+            data-iface="{{ name }}"
+            data-description="{{ info.description or '' }}"
+            data-address="{{ info.config_address or (info.inet[0] if info.inet else '') }}"
+            data-mode="{{ info.address_mode or '' }}"
+            data-nat-interface="{{ info.source_nat_interface or '' }}"
+            data-nat-rule="{{ info.nat_rule_number or '' }}"
+            data-zone="{{ info.zone or '' }}"
+            title="Edit Interface"
+          >
+            edit
+          </span>
+          {% if info.zone %}
+          <span
+            class="material-icons text-gray-400 hover:text-yellow-400 cursor-pointer unassign-zone-btn"
+            data-iface="{{ name }}"
+            data-zone="{{ info.zone }}"
+            data-description="{{ info.description or '' }}"
+            data-address="{{ info.config_address or (info.inet[0] if info.inet else '') }}"
+            data-mode="{{ info.address_mode or '' }}"
+            data-nat-interface="{{ info.source_nat_interface or '' }}"
+            data-nat-rule="{{ info.nat_rule_number or '' }}"
+            title="Remove from Zone"
+          >
+            link_off
+          </span>
+          {% endif %}
+          <span
+            class="material-icons text-gray-400 hover:text-red-500 cursor-pointer power-btn"
+            data-iface="{{ name }}"
+            data-state="{{ info.state }}"
+            title="Toggle Enable/Disable"
+          >
+            power_settings_new
+          </span>
+          <span
+            class="material-icons text-gray-400 hover:text-red-600 cursor-pointer delete-btn"
+            data-iface="{{ name }}"
+            title="Delete Interface"
+          >
+            delete
+          </span>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

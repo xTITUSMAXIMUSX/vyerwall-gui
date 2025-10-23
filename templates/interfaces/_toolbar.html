@@ -1,0 +1,29 @@
+<div class="flex flex-wrap gap-4 items-center justify-between">
+  <div>
+    <h2 class="text-lg font-semibold text-white">Interface Summary</h2>
+    <p class="text-sm text-gray-400">Manage base interfaces and VLAN subinterfaces.</p>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button
+      id="addInterfaceBtn"
+      {% if not available_interfaces %}
+        disabled
+        class="px-4 py-2 bg-gray-600 text-gray-300 rounded text-sm font-semibold flex items-center gap-2 cursor-not-allowed opacity-70"
+      {% else %}
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold text-white flex items-center gap-2"
+      {% endif %}
+    >
+      <span class="material-icons text-sm">add</span>
+      Add Interface
+    </button>
+
+    <button
+      id="createVlanBtn"
+      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold text-white flex items-center gap-2"
+    >
+      <span class="material-icons text-sm">playlist_add</span>
+      Add VLAN
+    </button>
+  </div>
+</div>

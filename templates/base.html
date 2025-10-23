@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en"
+  x-data="{
+    openServices: {% if active == 'services' %}true{% else %}false{% endif %},
+    openFirewall: {% if active == 'firewall' %}true{% else %}false{% endif %}
+  }">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% endblock %}</title>
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js for collapse/expand -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+
+<body class="bg-gray-900 text-gray-100 flex h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-gray-800 p-4 flex flex-col">
+    <div class="flex items-center gap-2 text-lg font-bold text-orange-400 mb-8">
+      Vyerwall-GUI
+    </div>
+
+    <nav class="flex flex-col gap-2">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='dashboard' %}bg-gray-700{% endif %}">
+        <span class="material-icons">dashboard</span> Dashboard
+      </a>
+
+      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='alerts' %}bg-gray-700{% endif %}">
+        <span class="material-icons">notifications</span> Alerts
+        <span class="ml-auto bg-red-500 text-xs px-2 py-0.5 rounded-full font-bold">2</span>
+      </a>
+
+      <!-- FIREWALL COLLAPSIBLE MENU -->
+      <div>
+        <button @click="openFirewall = !openFirewall"
+          class="w-full text-left p-2 rounded hover:bg-gray-700 flex items-center justify-between {% if active=='firewall' %}bg-gray-700{% endif %}">
+          <div class="flex items-center gap-2">
+            <span class="material-icons">security</span> Firewall
+          </div>
+          <span class="material-icons text-sm transition-transform"
+            :class="{ 'rotate-180': openFirewall }">expand_more</span>
+        </button>
+
+        <div x-show="openFirewall" x-transition class="flex flex-col pl-8 mt-1 space-y-1">
+          <a href="{{ url_for('firewall_rules.overview') }}"
+            class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='firewall' %}bg-gray-700{% endif %}">
+            <span class="material-icons-outlined text-sm">rule</span> Rules
+          </a>
+          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
+            <span class="material-icons-outlined text-sm">groups</span> Groups
+          </a>
+          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
+            <span class="material-icons-outlined text-sm">swap_horiz</span> NAT
+          </a>
+        </div>
+      </div>
+
+      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='vpn' %}bg-gray-700{% endif %}">
+        <span class="material-icons">vpn_lock</span> VPN
+      </a>
+
+      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='routing' %}bg-gray-700{% endif %}">
+        <span class="material-icons">alt_route</span> Routing
+      </a>
+
+      <!-- SERVICES COLLAPSIBLE MENU -->
+      <div>
+        <button @click="openServices = !openServices"
+          class="w-full text-left p-2 rounded hover:bg-gray-700 flex items-center justify-between {% if active=='services' %}bg-gray-700{% endif %}">
+          <div class="flex items-center gap-2">
+            <span class="material-icons">build</span> Services
+          </div>
+          <span class="material-icons text-sm transition-transform"
+            :class="{ 'rotate-180': openServices }">expand_more</span>
+        </button>
+
+        <div x-show="openServices" x-transition class="flex flex-col pl-8 mt-1 space-y-1">
+          <a href="{{ url_for('dhcp.dhcp') }}" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
+            <span class="material-icons-outlined text-sm">dns</span> DHCP
+          </a>
+          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
+            <span class="material-icons-outlined text-sm">schedule</span> NTP
+          </a>
+          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
+            <span class="material-icons-outlined text-sm">public</span> HTTPS API
+          </a>
+        </div>
+      </div>
+
+      <a href="{{ url_for('interfaces.interfaces') }}" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='interfaces' %}bg-gray-700{% endif %}">
+        <span class="material-icons">settings_ethernet</span> Interfaces
+      </a>
+
+      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='logs' %}bg-gray-700{% endif %}">
+        <span class="material-icons">article</span> Logs
+      </a>
+
+      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='system' %}bg-gray-700{% endif %}">
+        <span class="material-icons">memory</span> System
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col">
+    <!-- Top bar -->
+    <header class="flex justify-between items-center bg-gray-800 p-4 border-b border-gray-700">
+      <h1 class="text-xl font-bold">{% block header %}{% endblock %}</h1>
+      {% if save_config == True %}
+      <div class="flex items-center gap-4">
+        <form method="POST" action="{{ url_for('logout') }}">
+          <button class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Save Config</button>
+        </form>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-4">
+        <form method="POST" action="{{ url_for('logout') }}">
+          <button class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Log Out</button>
+        </form>
+      </div>
+    </header>
+
+    <section class="p-6 overflow-y-auto">
+      {% block content %}{% endblock %}
+    </section>
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
