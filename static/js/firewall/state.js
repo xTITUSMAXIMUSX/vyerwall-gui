@@ -40,13 +40,11 @@
       edit: document.getElementById('editRuleModal'),
       delete: document.getElementById('deleteRuleModal'),
       disable: document.getElementById('disableRuleModal'),
-      createZone: document.getElementById('createZoneModal'),
     };
 
     forms = {
       add: document.getElementById('addRuleForm'),
       edit: document.getElementById('editRuleForm'),
-      createZone: document.getElementById('createZoneForm'),
     };
 
     formButtons = {
@@ -56,9 +54,6 @@
       editSubmit: document.getElementById('editRuleSubmit'),
       editSpinner: document.getElementById('editRuleSpinner'),
       editLabel: document.getElementById('editRuleSubmitLabel'),
-      createZoneSubmit: document.getElementById('createZoneSubmit'),
-      createZoneSpinner: document.getElementById('createZoneSpinner'),
-      createZoneLabel: document.getElementById('createZoneSubmitLabel'),
     };
 
     confirmButtons = {

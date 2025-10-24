@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Firewall Zones{% endblock %}
+{% block header %}Firewall Zones{% endblock %}
+{% set active = 'firewall' %}
+
+{% block content %}
+<style>
+  #zoneMatrixTable tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.08);
+  }
+</style>
+
+<div class="space-y-6">
+  {% include 'firewall/zones/_summary.html' %}
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2 space-y-6">
+      {% include 'firewall/zones/_matrix.html' %}
+    </div>
+    <div class="space-y-6">
+      {% include 'firewall/zones/_list.html' %}
+    </div>
+  </div>
+</div>
+
+{% include 'firewall/zones/_modals.html' %}
+
+<script>
+  window.FIREWALL_ZONE_DATA = {{ {
+    'zones': zones,
+    'matrix': matrix,
+    'zone_names': zone_names,
+    'zone_display_map': zone_display_map,
+    'summary': summary,
+    'unassigned_interfaces': unassigned_interfaces
+  } | tojson }};
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/firewall/zones/index.js') }}"></script>
+{% endblock %}

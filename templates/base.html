@@ -50,11 +50,12 @@
 
         <div x-show="openFirewall" x-transition class="flex flex-col pl-8 mt-1 space-y-1">
           <a href="{{ url_for('firewall_rules.overview') }}"
-            class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='firewall' %}bg-gray-700{% endif %}">
+            class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='firewall' and (active_subnav|default(None)) != 'zones' %}bg-gray-700{% endif %}">
             <span class="material-icons-outlined text-sm">rule</span> Rules
           </a>
-          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
-            <span class="material-icons-outlined text-sm">groups</span> Groups
+          <a href="{{ url_for('firewall_zone.dashboard') }}"
+             class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='firewall' and (active_subnav|default(None))=='zones' %}bg-gray-700{% endif %}">
+            <span class="material-icons-outlined text-sm">dashboard_customize</span> Zones
           </a>
           <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
             <span class="material-icons-outlined text-sm">swap_horiz</span> NAT

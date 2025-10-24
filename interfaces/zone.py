@@ -132,3 +132,11 @@ def build_zone_binding_commands(source_zone: str, destination_zone: str, firewal
     if not src or not dst or not firewall_name:
         return []
     return [["firewall", "zone", dst, "from", src, "firewall", "name", firewall_name]]
+
+
+def build_zone_intra_firewall_commands(zone: str, firewall_name: str) -> List[List[str]]:
+    zone_name = sanitise_zone_name(zone)
+    fw_name = str(firewall_name or "").strip()
+    if not zone_name or not fw_name:
+        return []
+    return [["firewall", "zone", zone_name, "intra-zone-filtering", "firewall", "name", fw_name]]

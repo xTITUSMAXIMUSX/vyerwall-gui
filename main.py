@@ -21,7 +21,7 @@ from dashboard.dashboard import dashboard_bp
 from interfaces.interfaces import interfaces_bp
 from logs.logs import logs_bp
 from dhcp.dhcp import dhcp_bp
-from firewall import rules_bp
+from firewall import rules_bp, zone_bp
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey" 
@@ -36,6 +36,7 @@ app.register_blueprint(interfaces_bp)
 app.register_blueprint(logs_bp)
 app.register_blueprint(dhcp_bp)
 app.register_blueprint(rules_bp)
+app.register_blueprint(zone_bp)
 
 @app.route('/')
 def index():

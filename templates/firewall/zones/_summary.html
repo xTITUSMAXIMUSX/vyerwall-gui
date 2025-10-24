@@ -1,0 +1,14 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow">
+    <div class="text-sm text-gray-400">Total Zones</div>
+    <div class="text-2xl font-semibold text-white">{{ summary.total_zones }}</div>
+  </div>
+  <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow">
+    <div class="text-sm text-gray-400">Firewall Rule Sets</div>
+    <div class="text-2xl font-semibold text-white">{{ summary.total_firewall_sets }}</div>
+  </div>
+  <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow">
+    <div class="text-sm text-gray-400">Unassigned Interfaces</div>
+    <div class="text-2xl font-semibold text-white">{{ summary.unassigned_interfaces }}</div>
+  </div>
+</div>

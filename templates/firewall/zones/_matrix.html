@@ -1,0 +1,51 @@
+<div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+  <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+    <div>
+      <h3 class="text-lg font-semibold text-white">Zone Matrix</h3>
+      <p class="text-xs text-gray-400">Hover cells to view rule-set names. Click to manage firewall rules.</p>
+    </div>
+  </div>
+  <div class="overflow-auto">
+    <table class="min-w-full text-sm text-gray-200" id="zoneMatrixTable">
+      <thead class="bg-gray-800 text-gray-400 uppercase text-xs tracking-wider">
+        <tr>
+          <th class="px-4 py-3 text-left">Source \ Destination</th>
+          {% for destination in zone_names %}
+          <th class="px-4 py-3 text-center">{{ zone_display_map.get(destination, destination) }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in matrix %}
+        <tr class="border-t border-gray-800">
+          <td class="px-4 py-3 font-semibold text-white">{{ zone_display_map.get(row.source, row.source) }}</td>
+          {% for cell in row.cells %}
+          <td class="px-4 py-3 text-center">
+            {% if cell.exists %}
+            <button class="zone-matrix-cell inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 text-xs"
+                    data-firewall="{{ cell.firewall }}"
+                    data-source="{{ cell.source }}"
+                    data-destination="{{ cell.destination }}">
+              <span class="material-icons text-sm">shield</span>
+              {{ cell.firewall }}
+            </button>
+            {% if cell.type == 'self' %}
+            <div class="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Intra-zone</div>
+            {% endif %}
+            {% else %}
+            <div class="text-xs text-gray-500 italic">
+              {% if cell.type == 'self' %}
+              No intra-zone rule
+              {% else %}
+              No rule set
+              {% endif %}
+            </div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

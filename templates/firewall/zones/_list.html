@@ -1,0 +1,37 @@
+<div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+  <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+    <h3 class="text-lg font-semibold text-white">Zone Directory</h3>
+    <button id="openCreateZone" class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-sm rounded text-white">
+      <span class="material-icons text-sm">add_circle</span>
+      New Zone
+    </button>
+  </div>
+  <div class="divide-y divide-gray-800" id="zoneDirectory">
+    {% for zone in zones %}
+    <div class="p-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div>
+        <div class="text-white font-semibold text-lg">{{ zone.display_name or zone.name }}</div>
+        <div class="text-xs text-gray-400">{{ zone.member_count }} interface{{ zone.member_count != 1 and 's' or '' }}</div>
+        {% if zone.members %}
+        <div class="text-xs text-gray-300 mt-1">{{ zone.members | join(', ') }}</div>
+        {% else %}
+        <div class="text-xs text-gray-500 mt-1 italic">No interfaces assigned</div>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-2 mt-2 md:mt-0">
+        <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-xs rounded text-white zone-manage-btn"
+                data-zone="{{ zone.name }}"
+                data-members='{{ zone.members | tojson }}'>
+          <span class="material-icons text-sm">tune</span>
+          Manage
+        </button>
+        <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-xs rounded text-white zone-delete-btn"
+                data-zone="{{ zone.name }}">
+          <span class="material-icons text-sm">delete</span>
+          Delete
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

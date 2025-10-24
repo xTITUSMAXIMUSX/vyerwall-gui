@@ -127,7 +127,6 @@
     initialZone: {{ initial_zone | tojson }},
     initialName: {{ initial_name | tojson }},
     initialDetails: {{ initial_details | tojson }},
-    initialInterfaces: {{ initial_interfaces | tojson }}
   };
 </script>
 
@@ -139,6 +138,9 @@
 <script src="{{ url_for('static', filename='js/firewall/constants.js') }}"></script>
 <script src="{{ url_for('static', filename='js/firewall/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/firewall/state.js') }}"></script>
+<script src="{{ url_for('static', filename='js/firewall/controller/forms.js') }}"></script>
+<script src="{{ url_for('static', filename='js/firewall/controller/view.js') }}"></script>
+<script src="{{ url_for('static', filename='js/firewall/controller/api.js') }}"></script>
 <script src="{{ url_for('static', filename='js/firewall/controller.js') }}"></script>
 <script src="{{ url_for('static', filename='js/firewall/index.js') }}"></script>
 {% endblock %}

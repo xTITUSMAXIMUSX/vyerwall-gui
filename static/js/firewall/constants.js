@@ -16,7 +16,6 @@
       reorderControls: '#reorderControls',
       reorderSave: '#reorderSave',
       reorderCancel: '#reorderCancel',
-      createZoneButton: '#createZoneButton',
     },
     allowedPortProtocols: Object.freeze(['tcp', 'udp', 'tcp_udp']),
     defaultPortProtocol: 'tcp_udp',

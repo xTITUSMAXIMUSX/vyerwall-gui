@@ -318,11 +318,19 @@ set firewall zone LOCAL description "Gateway"
 set firewall zone LOCAL default-action drop
 
 # Rule Sets
+set firewall zone LAN intra-zone-filtering firewall name LAN-LAN
+set firewall ipv4 name LAN-WAN default-action drop
+set firewall ipv4 name LAN-WAN rule 10 action accept
+
 set firewall ipv4 name LAN-WAN default-action drop
 set firewall ipv4 name LAN-WAN rule 10 action accept
 
 set firewall ipv4 name LAN-LOCAL default-action drop
 set firewall ipv4 name LAN-LOCAL rule 10 action accept
+
+set firewall zone WAN intra-zone-filtering firewall name WAN-WAN
+set firewall ipv4 name WAN-WAN default-action drop
+set firewall ipv4 name WAN-WAN rule 10 action accept
 
 set firewall ipv4 name WAN-LAN default-action drop
 set firewall ipv4 name WAN-LOCAL default-action drop

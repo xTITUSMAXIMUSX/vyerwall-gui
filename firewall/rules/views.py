@@ -2,24 +2,15 @@ from __future__ import annotations
 
 import copy
 
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 
 from interfaces.device import configure_delete, configure_set
-from interfaces.zone import (
-    build_zone_binding_commands,
-    build_zone_definition_commands,
-    find_zone_for_interface,
-    load_zone_config,
-    build_zone_membership_commands,
-    map_zone_members,
-    sanitise_zone_name,
-    zone_pair_firewall_name,
-)
-from interfaces.util import normalise_iface_name
 
 from auth_utils import login_required
+from firewall.common import load_firewall_root
+from firewall.zone.utils import build_zone_map
 from .utils import (
     build_rule_delete_commands,
     build_rule_disable_paths,
@@ -35,111 +26,6 @@ from .utils import (
 )
 
 rules_bp = Blueprint("firewall_rules", __name__, url_prefix="/firewall/rules")
-
-
-def _load_firewall_root() -> Dict[str, Any]:
-    try:
-        response = current_app.device.retrieve_show_config(path=["firewall", "ipv4"])
-        return ensure_mapping(getattr(response, "result", {}) or {})
-    except Exception:
-        return {}
-
-
-def _build_zone_map() -> Dict[str, Dict[str, str]]:
-    try:
-        zone_config = load_zone_config()
-    except Exception:
-        zone_config = {}
-
-    mapping: Dict[str, Dict[str, str]] = {}
-    zone_container = ensure_mapping(zone_config)
-
-    for destination_zone, destination_cfg in zone_container.items():
-        destination_name = sanitise_zone_name(destination_zone)
-        if not destination_name:
-            continue
-
-        from_container = ensure_mapping(destination_cfg.get("from"))
-        for source_zone, source_cfg in from_container.items():
-            source_name = sanitise_zone_name(source_zone)
-            if not source_name:
-                continue
-
-            firewall_container = ensure_mapping(source_cfg.get("firewall"))
-            raw_names = firewall_container.get("name")
-
-            name_entries: List[str] = []
-            if isinstance(raw_names, dict):
-                name_entries.extend(str(key) for key in raw_names.keys())
-            elif isinstance(raw_names, list):
-                for entry in raw_names:
-                    if isinstance(entry, dict):
-                        name_entries.extend(str(key) for key in entry.keys())
-                    elif entry:
-                        name_entries.append(str(entry))
-            elif isinstance(raw_names, str):
-                name_entries.append(raw_names)
-
-            for firewall_name in name_entries:
-                name_str = str(firewall_name)
-                if not name_str:
-                    continue
-                mapping[name_str] = {
-                    "source_zone": source_name,
-                    "destination_zone": destination_name,
-                    "zone_label": f"{source_name} -> {destination_name}",
-                }
-
-    return mapping
-
-
-def _list_unassigned_interfaces() -> Iterable[str]:
-    zone_config = load_zone_config() or {}
-    membership = map_zone_members(zone_config)
-    assigned: set[str] = set()
-    for members in membership.values():
-        assigned.update({(normalise_iface_name(member) or member).lower() for member in members})
-
-    device = getattr(current_app, "device", None)
-    if not device:
-        return []
-    try:
-        response = device.retrieve_show_config(path=["interfaces"])
-        iface_config = ensure_mapping(getattr(response, "result", {}) or {})
-    except Exception:
-        iface_config = {}
-
-    ethernet_cfg = ensure_mapping(iface_config.get("ethernet"))
-
-    available_set: set[str] = set()
-    for iface_name, iface_data in ethernet_cfg.items():
-        base_name = str(iface_name)
-        if not base_name:
-            continue
-        normalized = (normalise_iface_name(base_name) or base_name).lower()
-        if normalized not in assigned and base_name.lower() not in assigned:
-            available_set.add(base_name)
-
-        vif_container = ensure_mapping(iface_data).get("vif")
-        vif_map = ensure_mapping(vif_container)
-        for vlan_id in vif_map.keys():
-            vif_name = f"{base_name}.{vlan_id}"
-            vif_normalized = (normalise_iface_name(vif_name) or vif_name).lower()
-            if vif_normalized not in assigned and vif_name.lower() not in assigned:
-                available_set.add(vif_name)
-
-    return sorted(available_set)
-
-
-def _build_firewall_seed_commands(name: str, seed_accept: bool) -> List[List[str]]:
-    commands: List[List[str]] = [
-        ["firewall", "ipv4", "name", name],
-        ["firewall", "ipv4", "name", name, "default-action", "drop"],
-    ]
-    if seed_accept:
-        commands.append(["firewall", "ipv4", "name", name, "rule", "10"])
-        commands.append(["firewall", "ipv4", "name", name, "rule", "10", "action", "accept"])
-    return commands
 
 
 def _load_firewall_name(name: str) -> Dict[str, Any]:
@@ -201,7 +87,7 @@ def _collect_firewall_list(
     root_config: Dict[str, Any]
 ) -> Tuple[List[str], Dict[str, Dict[str, Any]], Dict[str, List[Dict[str, str]]]]:
     name_map = ensure_mapping(root_config.get("name"))
-    zone_map = _build_zone_map()
+    zone_map = build_zone_map()
     metadata: Dict[str, Dict[str, Any]] = {}
 
     for name, cfg in name_map.items():
@@ -241,7 +127,7 @@ def _response_payload(name: str):
     config = _load_firewall_name(name)
     if not config:
         return None
-    zone_map = _build_zone_map()
+    zone_map = build_zone_map()
     return {
         "metadata": _parse_firewall_metadata(name, config, zone_map),
         "rules": _parse_firewall_rules(config),
@@ -277,7 +163,7 @@ def _validate_ports_protocol(payload: Dict[str, Any]) -> bool:
 @rules_bp.route("/")
 @login_required
 def overview():
-    root_config = _load_firewall_root()
+    root_config = load_firewall_root()
     firewall_names, metadata, zone_groups = _collect_firewall_list(root_config)
 
     zone_list = sorted(zone_groups.keys())
@@ -304,10 +190,8 @@ def overview():
             "metadata": initial_metadata,
             "rules": _parse_firewall_rules(initial_config) if initial_name else [],
         },
-        "initial_interfaces": {
-            "unassigned": list(_list_unassigned_interfaces()),
-        },
         "active": "firewall",
+        "active_subnav": "rules",
     }
 
     return render_template("firewall/rules/index.html", **context)
@@ -320,7 +204,7 @@ def firewall_name_details(name: str):
     if not config:
         return jsonify({"status": "error", "message": f"Firewall '{name}' not found."}), 404
 
-    zone_map = _build_zone_map()
+    zone_map = build_zone_map()
     payload = {
         "metadata": _parse_firewall_metadata(name, config, zone_map),
         "rules": _parse_firewall_rules(config),
@@ -331,104 +215,6 @@ def firewall_name_details(name: str):
 def _log_commands(action: str, commands: List[List[str]]):
     if current_app and current_app.logger:
         current_app.logger.info("Firewall %s commands: %s", action, commands)
-
-
-@rules_bp.route("/api/zones", methods=["POST"])
-@login_required
-def create_firewall_zone():
-    payload = request.get_json() or {}
-    raw_name = payload.get("zoneName") or payload.get("name") or payload.get("zone")
-    sanitized = sanitise_zone_name(raw_name or "")
-    if not sanitized:
-        return _error("Zone name is required.", 400)
-
-    zone_config = load_zone_config() or {}
-    existing_zone_names = {
-        sanitise_zone_name(zone_name): zone_name for zone_name in zone_config.keys()
-    }
-    if sanitized in existing_zone_names:
-        return _error(f"Zone '{sanitized}' already exists.", 400)
-
-    existing_zones = sorted(
-        zone for zone in existing_zone_names.keys() if zone and zone != sanitized
-    )
-
-    interface_field = payload.get("interface")
-    interface_candidate = normalise_iface_name(interface_field) if interface_field else ""
-    interface_candidate = (interface_candidate or "").strip()
-    if not interface_candidate:
-        return _error("An interface must be selected to create a zone.", 400)
-    available_interfaces = list(_list_unassigned_interfaces())
-    interface_lookup = {iface.lower(): iface for iface in available_interfaces}
-    if interface_candidate:
-        interface_key = interface_candidate.lower()
-        if interface_key not in interface_lookup:
-            return _error(f"Interface '{interface_candidate}' is not available for assignment.", 400)
-        interface_candidate = interface_lookup[interface_key]
-
-    commands: List[List[str]] = []
-    commands.extend(build_zone_definition_commands(sanitized, zone_config))
-
-    firewall_root = _load_firewall_root()
-    name_map = ensure_mapping(firewall_root.get("name"))
-    existing_firewalls = {str(key) for key in name_map.keys()}
-
-    def should_seed_accept(source: str, destination: str) -> bool:
-        if source == sanitized and destination in {"LOCAL", "WAN"}:
-            return True
-        if source == "LOCAL" and destination == sanitized:
-            return True
-        return False
-
-    for zone in existing_zones:
-        forward_name = zone_pair_firewall_name(sanitized, zone)
-        reverse_name = zone_pair_firewall_name(zone, sanitized)
-
-        if forward_name not in existing_firewalls:
-            commands.extend(_build_firewall_seed_commands(forward_name, should_seed_accept(sanitized, zone)))
-            existing_firewalls.add(forward_name)
-        if reverse_name not in existing_firewalls:
-            commands.extend(_build_firewall_seed_commands(reverse_name, should_seed_accept(zone, sanitized)))
-            existing_firewalls.add(reverse_name)
-
-        commands.extend(build_zone_binding_commands(sanitized, zone, forward_name))
-        commands.extend(build_zone_binding_commands(zone, sanitized, reverse_name))
-
-    if interface_candidate:
-        commands.extend(build_zone_membership_commands(sanitized, interface_candidate))
-
-    deduped_commands = dedupe_commands(commands)
-    if not deduped_commands:
-        return _error("Unable to generate configuration for the new zone.", 400)
-
-    _log_commands(f"create zone {sanitized}", deduped_commands)
-    success, error_message = configure_set(deduped_commands, error_context=f"create firewall zone {sanitized}")
-    if not success:
-        return _error(error_message or "Failed to create firewall zone.", 500)
-
-    root_config = _load_firewall_root()
-    firewall_names, metadata, zone_groups = _collect_firewall_list(root_config)
-    zone_list = sorted(set(zone_groups.keys()) | {sanitized})
-
-    selected_zone = sanitized
-    selected_firewall: Optional[str] = None
-    zone_entries = zone_groups.get(selected_zone, [])
-    if zone_entries:
-        selected_firewall = zone_entries[0]["name"]
-
-    data = {
-        "zones": zone_list,
-        "zoneGroups": zone_groups,
-        "metadata": metadata,
-        "names": firewall_names,
-        "selectedZone": selected_zone,
-        "selectedFirewall": selected_firewall,
-        "interfaces": {
-            "unassigned": list(_list_unassigned_interfaces()),
-        },
-    }
-
-    return jsonify({"status": "ok", "data": data})
 
 
 @rules_bp.route("/api/names/<path:name>/rules", methods=["POST"])
