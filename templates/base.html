@@ -137,7 +137,7 @@
              x-transition:enter-start="opacity-0 -translate-y-2"
              x-transition:enter-end="opacity-100 translate-y-0"
              class="flex flex-col pl-6 mt-1 space-y-1">
-          <a href="{{ url_for('dhcp.dhcp') }}" class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm text-gray-400 transition-all">
+          <a href="{{ url_for('dhcp.dhcp') }}" class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm {% if active=='services' and (active_subnav|default(None))=='dhcp' %}bg-gray-700/50 text-blue-300{% else %}text-gray-400{% endif %} transition-all">
             <span class="material-icons-outlined text-xs">dns</span>
             <span class="group-hover:text-gray-200">DHCP</span>
           </a>
@@ -208,11 +208,166 @@
       </div>
     </header>
 
+    <!-- Unsaved Changes Banner -->
+    <div id="unsavedBanner" class="{% if config_dirty %}flex{% else %}hidden{% endif %} items-center justify-between px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 border-b border-amber-500/50 shadow-lg">
+      <div class="flex items-center gap-3">
+        <span class="material-icons text-white animate-pulse">warning</span>
+        <div>
+          <p class="text-white font-semibold text-sm">Unsaved Configuration Changes</p>
+          <p class="text-amber-100 text-xs">You have unsaved changes that need to be saved to persist after reboot</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="discardChangesBtn" class="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+          <span class="material-icons text-sm">cancel</span>
+          Discard
+        </button>
+        <button id="saveConfigBtn" class="px-4 py-2 bg-white hover:bg-gray-100 text-amber-700 text-sm font-bold rounded-lg shadow-lg transition-all flex items-center gap-2">
+          <span class="material-icons text-sm">save</span>
+          <span id="saveConfigLabel">Save Configuration</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Content Area -->
     <section class="flex-1 p-6 overflow-y-auto custom-scrollbar bg-gray-900/50">
       {% block content %}{% endblock %}
     </section>
   </main>
+
+  <!-- Global Save Configuration JavaScript -->
+  <script>
+    // Global configuration state management
+    window.ConfigManager = {
+      checkStatus: async function() {
+        try {
+          const response = await fetch('/config/status');
+          const data = await response.json();
+          this.updateBanner(data.dirty);
+        } catch (error) {
+          console.error('Failed to check config status:', error);
+        }
+      },
+
+      updateBanner: function(isDirty) {
+        const banner = document.getElementById('unsavedBanner');
+        if (banner) {
+          if (isDirty) {
+            banner.classList.remove('hidden');
+            banner.classList.add('flex');
+          } else {
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+          }
+        }
+      },
+
+      saveConfiguration: async function() {
+        const btn = document.getElementById('saveConfigBtn');
+        const label = document.getElementById('saveConfigLabel');
+        const originalText = label.textContent;
+
+        try {
+          btn.disabled = true;
+          btn.classList.add('opacity-70', 'cursor-not-allowed');
+          label.textContent = 'Saving...';
+
+          const response = await fetch('/config/save', { method: 'POST' });
+          const data = await response.json();
+
+          if (data.status === 'ok') {
+            this.updateBanner(false);
+            this.showToast('Configuration saved successfully', 'success');
+          } else {
+            throw new Error(data.message || 'Failed to save configuration');
+          }
+        } catch (error) {
+          console.error('Save configuration error:', error);
+          this.showToast(error.message || 'Failed to save configuration', 'error');
+        } finally {
+          btn.disabled = false;
+          btn.classList.remove('opacity-70', 'cursor-not-allowed');
+          label.textContent = originalText;
+        }
+      },
+
+      discardChanges: async function() {
+        if (!confirm('Are you sure you want to discard all unsaved changes? This will mark the configuration as clean without saving.')) {
+          return;
+        }
+
+        try {
+          const response = await fetch('/config/discard', { method: 'POST' });
+          const data = await response.json();
+
+          if (data.status === 'ok') {
+            this.updateBanner(false);
+            this.showToast('Unsaved changes discarded', 'info');
+          } else {
+            throw new Error(data.message || 'Failed to discard changes');
+          }
+        } catch (error) {
+          console.error('Discard changes error:', error);
+          this.showToast(error.message || 'Failed to discard changes', 'error');
+        }
+      },
+
+      showToast: function(message, type = 'info') {
+        const colors = {
+          success: { bg: 'from-green-600 to-emerald-600', icon: 'check_circle', iconColor: 'text-green-300' },
+          error: { bg: 'from-red-600 to-red-700', icon: 'error', iconColor: 'text-red-300' },
+          info: { bg: 'from-blue-600 to-purple-600', icon: 'info', iconColor: 'text-blue-300' },
+          warning: { bg: 'from-orange-500 to-red-600', icon: 'warning', iconColor: 'text-orange-300' },
+        };
+
+        const config = colors[type] || colors.info;
+        const toast = document.createElement('div');
+        toast.className = `flex items-center gap-3 bg-gradient-to-r ${config.bg} text-white px-5 py-4 rounded-xl shadow-2xl border border-white/20 transform transition-all duration-300 opacity-0 translate-x-full min-w-[320px]`;
+        toast.innerHTML = `
+          <span class="material-icons ${config.iconColor}">${config.icon}</span>
+          <span class="flex-1 font-medium">${message}</span>
+          <button class="material-icons text-sm hover:scale-110 transition-transform opacity-70 hover:opacity-100" onclick="this.parentElement.remove()">close</button>
+        `;
+
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'toastContainer';
+          container.className = 'fixed top-4 right-4 z-[9999] flex flex-col gap-2';
+          document.body.appendChild(container);
+        }
+
+        container.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateX(0)';
+        });
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(100%)';
+          setTimeout(() => toast.remove(), 300);
+        }, 5000);
+      }
+    };
+
+    // Bind event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      const saveBtn = document.getElementById('saveConfigBtn');
+      const discardBtn = document.getElementById('discardChangesBtn');
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', () => window.ConfigManager.saveConfiguration());
+      }
+
+      if (discardBtn) {
+        discardBtn.addEventListener('click', () => window.ConfigManager.discardChanges());
+      }
+
+      // Check status on page load
+      window.ConfigManager.checkStatus();
+    });
+  </script>
 
   {% block scripts %}{% endblock %}
 </body>

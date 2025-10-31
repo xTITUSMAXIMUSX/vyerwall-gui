@@ -24,6 +24,81 @@
 
   const ruleHandlers = {};
 
+  let activeToast = null;
+
+  function showToast(message, type = 'info') {
+    const colors = {
+      success: { bg: 'from-green-600 to-emerald-600', icon: 'check_circle', iconColor: 'text-green-300' },
+      error: { bg: 'from-red-600 to-red-700', icon: 'error', iconColor: 'text-red-300' },
+      info: { bg: 'from-blue-600 to-purple-600', icon: 'info', iconColor: 'text-blue-300' },
+      warning: { bg: 'from-orange-500 to-red-600', icon: 'warning', iconColor: 'text-orange-300' },
+    };
+
+    const config = colors[type] || colors.info;
+    const toast = document.createElement('div');
+    toast.className = `flex items-center gap-3 bg-gradient-to-r ${config.bg} text-white px-5 py-4 rounded-xl shadow-2xl border border-white/20 transform transition-all duration-300 opacity-0 translate-x-full min-w-[320px]`;
+    toast.innerHTML = `
+      <span class="material-icons ${config.iconColor}">${config.icon}</span>
+      <span class="flex-1 font-medium">${message}</span>
+      <button class="material-icons text-sm hover:scale-110 transition-transform opacity-70 hover:opacity-100" onclick="this.parentElement.remove()">close</button>
+    `;
+
+    const container = document.getElementById('toastContainer');
+    if (container) {
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+      });
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 5000);
+    }
+    return toast;
+  }
+
+  function showLoadingToast(message) {
+    if (activeToast) {
+      activeToast.remove();
+    }
+    const toast = document.createElement('div');
+    toast.className = 'flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 py-4 rounded-xl shadow-2xl border border-white/20 transform transition-all duration-300 opacity-0 translate-x-full min-w-[320px]';
+    toast.innerHTML = `
+      <svg class="animate-spin h-5 w-5 text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span class="flex-1 font-medium">${message}</span>
+    `;
+
+    const container = document.getElementById('toastContainer');
+    if (container) {
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+      });
+    }
+    activeToast = toast;
+    return toast;
+  }
+
+  function hideLoadingToast() {
+    if (activeToast) {
+      activeToast.style.opacity = '0';
+      activeToast.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (activeToast) {
+          activeToast.remove();
+          activeToast = null;
+        }
+      }, 300);
+    }
+  }
+
   function guardOrderClean(action) {
     if (state.orderDirty) {
       alert(`Save or cancel the current reorder before ${action}.`);
@@ -150,11 +225,14 @@
   async function loadFirewall(name) {
     try {
       state.isLoading = true;
+      showLoadingToast(`Loading firewall rules for ${name}...`);
       const data = await api.fetchFirewallDetails(name);
       applyFirewallPayload(name, data);
+      hideLoadingToast();
     } catch (error) {
       console.error(error);
-      alert(error.message || `Failed to load firewall rules for ${name}.`);
+      hideLoadingToast();
+      showToast(error.message || `Failed to load firewall rules for ${name}.`, 'error');
     } finally {
       state.isLoading = false;
     }
@@ -324,6 +402,9 @@
       );
       const data = await api.reorderRules(firewallName, order);
       applyFirewallPayload(firewallName, data);
+      if (window.ConfigManager) {
+        window.ConfigManager.checkStatus();
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || 'Failed to reorder firewall rules.');
@@ -363,6 +444,9 @@
       const data = await api.createRule(firewallName, payload);
       closeModal(fwState.modals.add);
       applyFirewallPayload(firewallName, data);
+      if (window.ConfigManager) {
+        window.ConfigManager.checkStatus();
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || 'Failed to add firewall rule.');
@@ -403,6 +487,9 @@
       const data = await api.updateRule(firewallName, originalNumber, payload);
       closeModal(fwState.modals.edit);
       applyFirewallPayload(firewallName, data);
+      if (window.ConfigManager) {
+        window.ConfigManager.checkStatus();
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || 'Failed to update firewall rule.');
@@ -438,6 +525,9 @@
       const data = await api.deleteRule(firewallName, ruleNumber);
       closeModal(fwState.modals.delete);
       applyFirewallPayload(firewallName, data);
+      if (window.ConfigManager) {
+        window.ConfigManager.checkStatus();
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || 'Failed to delete firewall rule.');
@@ -474,6 +564,9 @@
       const data = await api.toggleRule(firewallName, ruleNumber, disableFlag);
       closeModal(fwState.modals.disable);
       applyFirewallPayload(firewallName, data);
+      if (window.ConfigManager) {
+        window.ConfigManager.checkStatus();
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || 'Failed to toggle firewall rule state.');

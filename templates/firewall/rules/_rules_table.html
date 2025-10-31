@@ -1,50 +1,107 @@
 {% import 'firewall/rules/_macros.html' as rules_macros %}
 
-<div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden flex flex-col">
-  <div class="px-4 py-3 border-b border-gray-700 flex flex-wrap items-center justify-between gap-2">
-    <h3 class="text-lg font-semibold text-white">Firewall Rules</h3>
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+  <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-blue-900/20 to-purple-900/20 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-blue-400">rule</span>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-white">Firewall Rules</h3>
+        <p class="text-xs text-gray-400">Manage access control policies</p>
+      </div>
+    </div>
     <div class="flex items-center gap-2">
       <div id="reorderControls" class="hidden flex items-center gap-2 mr-2">
         <button id="reorderCancel"
-          class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-sm rounded text-white">
+          class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-sm rounded-xl text-white font-medium transition-all">
           Cancel
         </button>
         <button id="reorderSave"
-          class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded text-white inline-flex items-center gap-2">
+          class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-sm rounded-xl text-white font-semibold shadow-lg inline-flex items-center gap-2 transition-all">
           <span class="material-icons text-sm animate-spin hidden" id="reorderSpinner">refresh</span>
+          <span class="material-icons text-sm" id="reorderSaveIcon">save</span>
           <span id="reorderSaveLabel">Save Order</span>
         </button>
       </div>
       <button id="createFirewallRule"
-        class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-sm rounded text-white">
-        <span class="material-icons text-sm">add</span>
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm rounded-xl text-white font-semibold shadow-lg transition-all">
+        <span class="material-icons text-sm">add_circle</span>
         Add Rule
       </button>
     </div>
   </div>
-  <div class="overflow-x-auto max-h-[32rem]">
+  <div class="overflow-x-auto max-h-[36rem]">
     <table class="min-w-full text-sm text-gray-200" id="firewallRulesTable">
-      <thead class="bg-gray-800 text-gray-400 uppercase text-xs tracking-wider">
+      <thead class="bg-gradient-to-r from-gray-800 to-gray-900 text-gray-300 text-xs font-semibold tracking-wider sticky top-0 z-10">
         <tr>
-          <th class="px-4 py-3 text-left">Rule #</th>
-          <th class="px-4 py-3 text-left">Protocol</th>
-          <th class="px-4 py-3 text-left">Source</th>
-          <th class="px-4 py-3 text-left">Src Port</th>
-          <th class="px-4 py-3 text-left">Destination</th>
-          <th class="px-4 py-3 text-left">Dst Port</th>
-          <th class="px-4 py-3 text-left">Description</th>
-          <th class="px-4 py-3 text-left">Actions</th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">tag</span>
+              <span>Rule #</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">hub</span>
+              <span>Protocol</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">source</span>
+              <span>Source</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">input</span>
+              <span>Src Port</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">place</span>
+              <span>Destination</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">output</span>
+              <span>Dst Port</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">description</span>
+              <span>Description</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">settings</span>
+              <span>Actions</span>
+            </div>
+          </th>
         </tr>
       </thead>
-      <tbody id="firewallRulesBody">
+      <tbody id="firewallRulesBody" class="divide-y divide-gray-800/50">
         {% if initial_rules %}
           {% for rule in initial_rules %}
             {{ rules_macros.rule_row(rule, action_meta) }}
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="8" class="px-4 py-6 text-center text-gray-400">
-              No rules defined for this firewall.
+            <td colspan="8" class="px-5 py-12 text-center text-gray-400">
+              <div class="flex flex-col items-center gap-3">
+                <div class="w-16 h-16 bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl flex items-center justify-center">
+                  <span class="material-icons text-3xl text-gray-600">rule</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-300 mb-1">No rules defined</p>
+                  <p class="text-sm text-gray-500">Click "Add Rule" to create your first firewall rule</p>
+                </div>
+              </div>
             </td>
           </tr>
         {% endif %}

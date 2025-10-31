@@ -1,7 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}Firewall Rules{% endblock %}
 {% set active = 'firewall' %}
-{% block header %}Firewall Rules{% endblock %}
+{% set active_subnav = 'rules' %}
+{% block header %}
+<div class="flex items-center gap-3 mb-2">
+  <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+    <span class="material-icons text-white text-2xl">rule</span>
+  </div>
+  <div>
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+      Firewall Rules
+    </h1>
+    <p class="text-gray-400 text-sm">Manage zone-based firewall rule sets and policies</p>
+  </div>
+</div>
+{% endblock %}
 
 {% set initial_meta = initial_details.metadata if initial_details else {} %}
 {% set initial_rules = initial_details.rules if initial_details else [] %}
@@ -17,8 +30,8 @@
 {% set protocol_labels = {'all': 'All'} %}
 {% set action_meta = {
   'accept': {'icon': 'check_circle', 'class': 'text-green-400', 'label': 'Accept rule'},
-  'drop': {'icon': 'cancel', 'class': 'text-amber-400', 'label': 'Drop rule'},
-  'reject': {'icon': 'do_not_disturb_on', 'class': 'text-red-500', 'label': 'Reject rule'},
+  'drop': {'icon': 'cancel', 'class': 'text-red-500', 'label': 'Drop rule'},
+  'reject': {'icon': 'do_not_disturb_on', 'class': 'text-amber-400', 'label': 'Reject rule'},
   'default': {'icon': 'radio_button_unchecked', 'class': 'text-gray-500', 'label': 'No action set'}
 } %}
 {% set named_ports = [
@@ -105,14 +118,18 @@
     background-color: rgba(59, 130, 246, 0.15);
     transition: background-color 0.15s ease, border-color 0.15s ease;
   }
+
+  #firewallRulesBody tr:hover {
+    background-color: rgba(139, 92, 246, 0.05);
+  }
 </style>
 
 
-<div class="bg-gray-800 rounded-xl shadow flex overflow-hidden min-h-[28rem]">
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl flex overflow-hidden min-h-[32rem] border border-gray-700/50">
   {% include 'firewall/rules/_zone_list.html' %}
   {% include 'firewall/rules/_zone_pairs.html' %}
 
-  <section class="flex-1 p-6 space-y-6">
+  <section class="flex-1 p-6 space-y-6 overflow-y-auto">
     {% include 'firewall/rules/_summary.html' %}
     {% include 'firewall/rules/_legend.html' %}
     {% include 'firewall/rules/_rules_table.html' %}
@@ -131,6 +148,8 @@
 </script>
 
 {% include 'firewall/rules/_modals.html' %}
+
+<div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
 
 {% endblock %}
 

@@ -1,6 +1,7 @@
 import ipaddress
 from flask import Blueprint, render_template, current_app, request, jsonify
 from auth_utils import login_required
+from config_manager import mark_config_dirty
 
 from .utils import (
     ensure_dict,
@@ -221,6 +222,20 @@ def _build_delete_commands(scope_data, previous_scope):
     removed_excludes = prev_excludes - new_excludes
     for exclude in removed_excludes:
         delete_commands.append(subnet_path + ["exclude", exclude])
+
+    # Check if DNS servers were removed
+    prev_dns = set(strip_or_none(d) for d in (previous_scope.get("dnsServers") or []) if strip_or_none(d))
+    new_dns = set(strip_or_none(d) for d in (scope_data.get("dnsServers") or []) if strip_or_none(d))
+    removed_dns = prev_dns - new_dns
+    for dns_server in removed_dns:
+        delete_commands.append(subnet_path + ["option", "name-server", dns_server])
+
+    # Check if search domains were removed
+    prev_domains = set(strip_or_none(d) for d in (previous_scope.get("searchDomains") or []) if strip_or_none(d))
+    new_domains = set(strip_or_none(d) for d in (scope_data.get("searchDomains") or []) if strip_or_none(d))
+    removed_domains = prev_domains - new_domains
+    for domain in removed_domains:
+        delete_commands.append(subnet_path + ["option", "domain-search", domain])
 
     return delete_commands
 
@@ -605,28 +620,67 @@ def list_leases(iface):
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(exc)}), 500
 
-    shared_candidates = {
-        strip_or_none(scope.get("sharedNetwork")),
-        strip_or_none(scope.get("shared_network_name")),
-    }
-    shared_candidates = {name.strip().lower() for name in shared_candidates if name}
+    # Get the shared network name (this is the pool name)
+    shared_network = strip_or_none(scope.get("sharedNetwork"))
+
+    if not shared_network:
+        # No shared network configured, return empty leases
+        return jsonify({"status": "ok", "data": []})
 
     leases = []
     try:
-        # Use the show command to get leases
-        response = current_app.device.show(path=["dhcp", "server", "leases"])
+        # Query leases for the specific pool (shared-network-name)
+        import json
+        response = current_app.device.show(path=["dhcp", "server", "leases", "pool", shared_network])
         raw_result = getattr(response, "result", "") or ""
-        leases = parse_lease_table(raw_result)
-    except Exception:
-        leases = []
 
-    # Filter leases by shared network
-    if shared_candidates:
-        leases = [
-            lease
-            for lease in leases
-            if not lease.get("pool") or lease["pool"].strip().lower() in shared_candidates
-        ]
+        if not raw_result or not raw_result.strip():
+            # No leases for this pool
+            return jsonify({"status": "ok", "data": []})
+
+        # Parse the table output into JSON
+        lines = [line.rstrip() for line in raw_result.strip().splitlines() if line.strip()]
+
+        if len(lines) < 3:
+            # Not enough lines for a valid table (header, separator, data)
+            return jsonify({"status": "ok", "data": []})
+
+        # Extract headers from first line
+        headers = [h.strip() for h in lines[0].split("  ") if h.strip()]
+
+        # Data rows start after the dashed separator (line 2)
+        rows = lines[2:]
+
+        # Parse each row
+        for row in rows:
+            # Split on multiple spaces, filter empty
+            values = [v.strip() for v in row.split("  ") if v.strip()]
+            if len(values) >= len(headers):
+                record = dict(zip(headers, values))
+
+                # Normalize keys for frontend compatibility
+                # Convert "IP Address" -> "ip", "MAC address" -> "mac", etc.
+                normalized = {
+                    "ip": record.get("IP Address", record.get("IP address", "")),
+                    "mac": record.get("MAC address", record.get("MAC Address", "")),
+                    "state": record.get("State", ""),
+                    "lease_start": record.get("Lease start", ""),
+                    "lease_expiration": record.get("Lease expiration", ""),
+                    "remaining": record.get("Remaining", ""),
+                    "pool": record.get("Pool", ""),
+                    "hostname": record.get("Hostname", ""),
+                    "origin": record.get("Origin", ""),
+                }
+
+                leases.append(normalized)
+
+        current_app.logger.debug(f"Parsed {len(leases)} leases for pool '{shared_network}'")
+
+    except Exception as exc:
+        current_app.logger.error(f"Failed to fetch leases for pool '{shared_network}': {exc}")
+        import traceback
+        traceback.print_exc()
+        leases = []
 
     return jsonify({"status": "ok", "data": leases})
 
@@ -710,8 +764,8 @@ def create_dhcp(iface):
             disable_cmd = ["service", "dhcp-server", "shared-network-name", shared_network, "disable"]
             device.configure_set(path=[disable_cmd])
 
-        # Save configuration
-        device.config_file_save()
+        # Mark configuration as dirty (unsaved changes)
+        mark_config_dirty()
 
         refreshed = get_dhcp(iface)
         return jsonify({"status": "ok", "created": True, "data": refreshed})
@@ -799,8 +853,8 @@ def update_dhcp(iface):
             # Add disable flag
             device.configure_set(path=[base_path + ["disable"]])
 
-        # Save configuration
-        device.config_file_save()
+        # Mark configuration as dirty (unsaved changes)
+        mark_config_dirty()
 
         refreshed = get_dhcp(iface)
         return jsonify({"status": "ok", "created": False, "data": refreshed})
@@ -842,8 +896,8 @@ def delete_dhcp(iface):
         ]
         device.configure_delete(path=delete_path)
 
-        # Save configuration
-        device.config_file_save()
+        # Mark configuration as dirty (unsaved changes)
+        mark_config_dirty()
 
         return jsonify({"status": "ok", "deleted": True})
 

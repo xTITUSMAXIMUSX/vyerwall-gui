@@ -22,9 +22,16 @@ from interfaces.interfaces import interfaces_bp
 from logs.logs import logs_bp
 from dhcp.dhcp import dhcp_bp
 from firewall import rules_bp, zone_bp
+from config_manager import config_bp
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey" 
+app.secret_key = "supersecretkey"
+
+# Context processor to make config status available to all templates
+@app.context_processor
+def inject_config_status():
+    from config_manager import is_config_dirty
+    return dict(config_dirty=is_config_dirty()) 
 
 # Initialize VyDevice and store in app context
 device = VyDevice(hostname=hostname, apikey=apikey, port=port, protocol=protocol, verify=verify)
@@ -37,6 +44,7 @@ app.register_blueprint(logs_bp)
 app.register_blueprint(dhcp_bp)
 app.register_blueprint(rules_bp)
 app.register_blueprint(zone_bp)
+app.register_blueprint(config_bp)
 
 @app.route('/')
 def index():

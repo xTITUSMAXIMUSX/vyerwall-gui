@@ -9,6 +9,7 @@ from flask import Blueprint, current_app, jsonify, render_template, request
 from interfaces.device import configure_delete, configure_set
 
 from auth_utils import login_required
+from config_manager import mark_config_dirty
 from firewall.common import load_firewall_root
 from firewall.zone.utils import build_zone_map
 from .utils import (
@@ -256,6 +257,9 @@ def create_firewall_rule(name: str):
     if not success:
         return _error(error_message or "Failed to create firewall rule.", 500)
 
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
+
     refreshed = _response_payload(name)
     return jsonify({"status": "ok", "data": refreshed})
 
@@ -311,6 +315,9 @@ def update_firewall_rule(name: str, rule_number: int):
     success, error_message = configure_set(commands, error_context=f"replace firewall rule {target_number} in {name}")
     if not success:
         return _error(error_message or "Failed to update firewall rule.", 500)
+
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
 
     refreshed = _response_payload(name)
     return jsonify({"status": "ok", "data": refreshed})
@@ -372,6 +379,9 @@ def reorder_firewall_rules(name: str):
             _log_commands(f"restore firewall rules in {name} after failed reorder", restore_commands)
             configure_set(restore_commands, error_context=f"restore firewall rules in {name}")
         return _error(error_message or "Failed to apply reordered firewall rules.", 500)
+
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
 
     refreshed = _response_payload(name)
     return jsonify({"status": "ok", "data": refreshed})
@@ -459,6 +469,9 @@ def delete_firewall_rule(name: str, rule_number: int):
     if not compact_success:
         return _error(compact_error or "Failed to resequence firewall rules after deletion.", 500)
 
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
+
     refreshed = _response_payload(name)
     return jsonify({"status": "ok", "data": refreshed})
 
@@ -495,6 +508,9 @@ def toggle_firewall_rule(name: str, rule_number: int):
 
     if not success:
         return _error(error_message or "Failed to toggle firewall rule state.", 500)
+
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
 
     refreshed = _response_payload(name)
     return jsonify({"status": "ok", "data": refreshed})

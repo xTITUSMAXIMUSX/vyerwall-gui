@@ -178,7 +178,22 @@
     }
 
     if (defaultActionEl) {
-      defaultActionEl.textContent = metadata.default_action || 'accept';
+      const action = (metadata.default_action || 'accept').toLowerCase();
+      defaultActionEl.textContent = action;
+
+      // Remove existing color classes
+      defaultActionEl.classList.remove('text-green-400', 'text-red-500', 'text-amber-400', 'text-orange-300');
+
+      // Add color based on action
+      if (action === 'accept') {
+        defaultActionEl.classList.add('text-green-400');
+      } else if (action === 'drop') {
+        defaultActionEl.classList.add('text-red-500');
+      } else if (action === 'reject') {
+        defaultActionEl.classList.add('text-amber-400');
+      } else {
+        defaultActionEl.classList.add('text-orange-300');
+      }
     }
 
     if (ruleCountEl) {

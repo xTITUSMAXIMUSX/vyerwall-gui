@@ -1,4 +1,7 @@
 import os
+import json
+import urllib3
+urllib3.disable_warnings()
 from pyvyos import VyDevice
 from dotenv import load_dotenv
 load_dotenv()
@@ -14,6 +17,7 @@ verify = verify_ssl.lower() == "true" if verify_ssl else True
 # Initialize VyDevice and store in app context
 device = VyDevice(hostname=hostname, apikey=apikey, port=port, protocol=protocol, verify=verify)
 
-data = device.retrieve_show_config(path=["service", "dhcp-server", "shared-network-name", "TEST7"])
+data = device.configure_delete(path=["service", "dhcp-server", "shared-network-name", "LAN", "subnet", "10.50.50.0.0/24", "option", "name-server", "8.8.8.8"])
 
 print(data.result)
+

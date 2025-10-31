@@ -1,12 +1,17 @@
 {% extends 'base.html' %}
 {% block title %}DHCP Server{% endblock %}
 {% set active = 'services' %}
+{% set active_subnav = 'dhcp' %}
 {% block header %}
-<div class="flex items-center gap-3">
-  <span class="material-icons text-blue-400 text-3xl">dns</span>
+<div class="flex items-center gap-3 mb-2">
+  <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+    <span class="material-icons text-white text-2xl">dns</span>
+  </div>
   <div>
-    <div class="text-2xl font-bold">DHCP Server</div>
-    <div class="text-sm text-gray-400 font-normal">Configure DHCP scopes and manage IP address leasing</div>
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+      DHCP Server
+    </h1>
+    <p class="text-gray-400 text-sm">Configure DHCP scopes and manage IP address leasing</p>
   </div>
 </div>
 {% endblock %}

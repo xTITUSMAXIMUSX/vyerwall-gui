@@ -1,89 +1,123 @@
 <!-- Add Rule Modal -->
-<div id="addRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-gray-900 rounded-xl shadow-lg w-[32rem] p-6 border border-gray-700">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-semibold text-white">Add Firewall Rule</h3>
-      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="addRuleModal">close</button>
+<div id="addRuleModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-blue-900/20 to-purple-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-blue-400">add_circle</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Add Firewall Rule</h3>
+          <p class="text-xs text-gray-400">Create a new access control rule</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-close-modal="addRuleModal">close</button>
     </div>
-    <form id="addRuleForm" class="space-y-4">
+
+    <!-- Modal Body -->
+    <form id="addRuleForm" class="p-6 space-y-5">
       <input type="hidden" name="number">
+
       <div>
-        <label class="block text-sm text-gray-300 mb-1">Action</label>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">gavel</span>
+          Action
+        </label>
         <select name="action" required
-          class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
           <option value="accept">Accept</option>
           <option value="drop">Drop</option>
           <option value="reject">Reject</option>
         </select>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Protocol</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">hub</span>
+            Protocol
+          </label>
           <select name="protocol"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
             {% for proto in protocol_options %}
             <option value="{{ proto }}" {% if proto == 'tcp_udp' %}selected{% endif %}>{{ protocol_labels.get(proto, proto) }}</option>
             {% endfor %}
           </select>
         </div>
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Description</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">description</span>
+            Description
+          </label>
           <input type="text" name="description" placeholder="Rule description"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Source Address</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">source</span>
+            Source Address
+          </label>
           <input type="text" name="sourceAddress" placeholder="0.0.0.0/0"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
         </div>
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Source Port</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">input</span>
+            Source Port
+          </label>
           <div class="space-y-2">
             <select data-port-select="source"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
               <option value="other" data-protocol="" selected>Other</option>
               {% for port in named_ports %}
               <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
               {% endfor %}
             </select>
             <input type="text" name="sourcePort" data-port-input="source" placeholder="telnet,http,123,1001-1005"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
           </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Destination Address</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">place</span>
+            Destination Address
+          </label>
           <input type="text" name="destinationAddress" placeholder="0.0.0.0/0"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
         </div>
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Destination Port</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">output</span>
+            Destination Port
+          </label>
           <div class="space-y-2">
             <select data-port-select="destination"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
               <option value="other" data-protocol="" selected>Other</option>
               {% for port in named_ports %}
               <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
               {% endfor %}
             </select>
             <input type="text" name="destinationPort" data-port-input="destination" placeholder="telnet,http,123,1001-1005"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
           </div>
         </div>
       </div>
 
-      <div class="flex justify-end gap-3 pt-2">
-        <button type="button" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+      <div class="flex justify-end gap-3 pt-4 border-t border-gray-700/50">
+        <button type="button" class="px-5 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-medium transition-all"
           data-close-modal="addRuleModal">Cancel</button>
         <button type="submit" id="addRuleSubmit"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white inline-flex items-center gap-2">
+          class="px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl text-white font-semibold inline-flex items-center gap-2 shadow-lg transition-all">
           <span class="material-icons text-sm animate-spin hidden" id="addRuleSpinner">refresh</span>
+          <span class="material-icons text-sm" id="addRuleIcon">add_circle</span>
           <span id="addRuleSubmitLabel">Create Rule</span>
         </button>
       </div>
@@ -92,24 +126,42 @@
 </div>
 
 <!-- Edit Rule Modal -->
-<div id="editRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-gray-900 rounded-xl shadow-lg w-[32rem] p-6 border border-gray-700">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-semibold text-white">Edit Firewall Rule</h3>
-      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="editRuleModal">close</button>
-    </div>
-    <form id="editRuleForm" class="space-y-4">
-      <input type="hidden" name="originalNumber">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-gray-300 mb-1">Rule Number</label>
-          <input type="number" name="number" min="1" required readonly
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none opacity-70 cursor-not-allowed">
+<div id="editRuleModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-blue-900/20 to-purple-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-blue-400">edit</span>
         </div>
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Action</label>
+          <h3 class="text-xl font-bold text-white">Edit Firewall Rule</h3>
+          <p class="text-xs text-gray-400">Modify existing rule configuration</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-close-modal="editRuleModal">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <form id="editRuleForm" class="p-6 space-y-5">
+      <input type="hidden" name="originalNumber">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">tag</span>
+            Rule Number
+          </label>
+          <input type="number" name="number" min="1" required readonly
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:outline-none opacity-70 cursor-not-allowed">
+        </div>
+        <div>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">gavel</span>
+            Action
+          </label>
           <select name="action" required
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
             <option value="accept">Accept</option>
             <option value="drop">Drop</option>
             <option value="reject">Reject</option>
@@ -117,11 +169,14 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Protocol</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">hub</span>
+            Protocol
+          </label>
           <select name="protocol"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus-border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
             <option value="">Select protocol</option>
             {% for proto in protocol_options %}
             <option value="{{ proto }}">{{ protocol_labels.get(proto, proto) }}</option>
@@ -129,68 +184,87 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Description</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">description</span>
+            Description
+          </label>
           <input type="text" name="description"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Source Address</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">source</span>
+            Source Address
+          </label>
           <input type="text" name="sourceAddress"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
         </div>
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Source Port</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">input</span>
+            Source Port
+          </label>
           <div class="space-y-2">
             <select data-port-select="source"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
               <option value="other" data-protocol="" selected>Other</option>
               {% for port in named_ports %}
               <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
               {% endfor %}
             </select>
             <input type="text" name="sourcePort" data-port-input="source"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
           </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Destination Address</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">place</span>
+            Destination Address
+          </label>
           <input type="text" name="destinationAddress"
-            class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+            class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
         </div>
         <div>
-          <label class="block text-sm text-gray-300 mb-1">Destination Port</label>
+          <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-blue-400">output</span>
+            Destination Port
+          </label>
           <div class="space-y-2">
             <select data-port-select="destination"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all">
               <option value="other" data-protocol="" selected>Other</option>
               {% for port in named_ports %}
               <option value="{{ port.value }}" data-protocol="{{ port.protocol }}">{{ port.label }}</option>
               {% endfor %}
             </select>
             <input type="text" name="destinationPort" data-port-input="destination"
-              class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none">
+              class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500">
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-xl border border-gray-700/50">
         <input type="checkbox" id="editRuleDisabled" name="disabled"
-          class="h-4 w-4 text-blue-500 bg-gray-800 border border-gray-600 rounded">
-        <label for="editRuleDisabled" class="text-sm text-gray-300 select-none">Disable rule</label>
+          class="h-5 w-5 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-2 focus:ring-blue-500/20">
+        <label for="editRuleDisabled" class="flex items-center gap-2 text-sm text-gray-300 select-none cursor-pointer">
+          <span class="material-icons text-xs text-gray-400">toggle_off</span>
+          Disable this rule
+        </label>
       </div>
 
-      <div class="flex justify-end gap-3 pt-2">
-        <button type="button" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+      <div class="flex justify-end gap-3 pt-4 border-t border-gray-700/50">
+        <button type="button" class="px-5 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-medium transition-all"
           data-close-modal="editRuleModal">Cancel</button>
         <button type="submit" id="editRuleSubmit"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white inline-flex items-center gap-2">
+          class="px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl text-white font-semibold inline-flex items-center gap-2 shadow-lg transition-all">
           <span class="material-icons text-sm animate-spin hidden" id="editRuleSpinner">refresh</span>
+          <span class="material-icons text-sm" id="editRuleIcon">save</span>
           <span id="editRuleSubmitLabel">Save Changes</span>
         </button>
       </div>
@@ -199,45 +273,81 @@
 </div>
 
 <!-- Delete Rule Modal -->
-<div id="deleteRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-gray-900 rounded-xl shadow-lg w-[26rem] p-6 border border-gray-700">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-semibold text-white">Delete Firewall Rule</h3>
-      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="deleteRuleModal">close</button>
+<div id="deleteRuleModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-red-900/20 to-pink-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-red-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-red-400">delete</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Delete Firewall Rule</h3>
+          <p class="text-xs text-gray-400">This action cannot be undone</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-close-modal="deleteRuleModal">close</button>
     </div>
-    <p class="text-gray-300 mb-6" id="deleteRuleMessage">
-      Are you sure you want to delete rule <span class="font-semibold">--</span>?
-    </p>
-    <div class="flex justify-end gap-3">
-      <button class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
-        data-close-modal="deleteRuleModal">Cancel</button>
-      <button id="confirmDeleteRule"
-        class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white inline-flex items-center gap-2">
-        <span class="material-icons text-sm animate-spin hidden" id="deleteRuleSpinner">refresh</span>
-        <span id="deleteRuleSubmitLabel">Delete</span>
-      </button>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <div class="flex items-start gap-3 mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+        <span class="material-icons text-red-400 mt-0.5">warning</span>
+        <p class="text-gray-300 text-sm" id="deleteRuleMessage">
+          Are you sure you want to delete rule <span class="font-semibold text-white">--</span>?
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button class="px-5 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-medium transition-all"
+          data-close-modal="deleteRuleModal">Cancel</button>
+        <button id="confirmDeleteRule"
+          class="px-5 py-3 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 rounded-xl text-white font-semibold inline-flex items-center gap-2 shadow-lg transition-all">
+          <span class="material-icons text-sm animate-spin hidden" id="deleteRuleSpinner">refresh</span>
+          <span class="material-icons text-sm" id="deleteRuleIcon">delete</span>
+          <span id="deleteRuleSubmitLabel">Delete</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Disable Rule Modal -->
-<div id="disableRuleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-gray-900 rounded-xl shadow-lg w-[26rem] p-6 border border-gray-700">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-semibold text-white">Toggle Rule State</h3>
-      <button class="material-icons text-gray-400 hover:text-white" data-close-modal="disableRuleModal">close</button>
+<div id="disableRuleModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-amber-900/20 to-orange-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-amber-400">toggle_on</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Toggle Rule State</h3>
+          <p class="text-xs text-gray-400">Enable or disable this rule</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-close-modal="disableRuleModal">close</button>
     </div>
-    <p class="text-gray-300 mb-6" id="disableRuleMessage">
-      Are you sure you want to disable rule <span class="font-semibold">--</span>?
-    </p>
-    <div class="flex justify-end gap-3">
-      <button class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
-        data-close-modal="disableRuleModal">Cancel</button>
-      <button id="confirmDisableRule"
-        class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded text-gray-900 font-semibold inline-flex items-center gap-2">
-        <span class="material-icons text-sm animate-spin hidden" id="disableRuleSpinner">refresh</span>
-        <span id="disableRuleSubmitLabel">Confirm</span>
-      </button>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <div class="flex items-start gap-3 mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+        <span class="material-icons text-amber-400 mt-0.5">info</span>
+        <p class="text-gray-300 text-sm" id="disableRuleMessage">
+          Are you sure you want to disable rule <span class="font-semibold text-white">--</span>?
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button class="px-5 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-medium transition-all"
+          data-close-modal="disableRuleModal">Cancel</button>
+        <button id="confirmDisableRule"
+          class="px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 rounded-xl text-white font-semibold inline-flex items-center gap-2 shadow-lg transition-all">
+          <span class="material-icons text-sm animate-spin hidden" id="disableRuleSpinner">refresh</span>
+          <span class="material-icons text-sm" id="disableRuleIcon">toggle_on</span>
+          <span id="disableRuleSubmitLabel">Confirm</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

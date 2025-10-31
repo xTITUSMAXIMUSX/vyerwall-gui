@@ -1,35 +1,64 @@
-<div class="border border-gray-700 rounded-xl p-4 bg-gray-900">
-  <h2 class="text-xl font-semibold text-white mb-2" id="firewallTitle">
-    {% if initial_name %}{{ initial_name }}{% else %}No Firewall Selected{% endif %}
-  </h2>
-  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm text-gray-300">
-    <div>
-      <span class="text-gray-400 block">Description</span>
-      <span id="firewallDescription">
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+  <div class="flex items-center gap-3 mb-4">
+    <div class="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+      <span class="material-icons text-blue-400 text-2xl">shield</span>
+    </div>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent" id="firewallTitle">
+        {% if initial_name %}{{ initial_name }}{% else %}No Firewall Selected{% endif %}
+      </h2>
+      <p class="text-xs text-gray-400">Firewall rule set details</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+    <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+      <div class="flex items-center gap-2 mb-2 text-gray-400">
+        <span class="material-icons text-xs">description</span>
+        <span class="font-medium text-xs">Description</span>
+      </div>
+      <span id="firewallDescription" class="text-gray-200 font-medium">
         {% if initial_meta.description %}
           {{ initial_meta.description }}
         {% else %}
-          <span class="text-gray-500">None</span>
+          <span class="text-gray-500 italic">None</span>
         {% endif %}
       </span>
     </div>
-    <div>
-      <span class="text-gray-400 block">Zone Pair</span>
-      <span id="firewallZonePair">
+    <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+      <div class="flex items-center gap-2 mb-2 text-gray-400">
+        <span class="material-icons text-xs">swap_horiz</span>
+        <span class="font-medium text-xs">Zone Pair</span>
+      </div>
+      <span id="firewallZonePair" class="text-blue-300 font-bold text-sm">
         {% if initial_meta.zone_label %}
           {{ initial_meta.zone_label }}
         {% else %}
-          <span class="text-gray-500">Unassigned</span>
+          <span class="text-gray-500 italic font-normal">Unassigned</span>
         {% endif %}
       </span>
     </div>
-    <div>
-      <span class="text-gray-400 block">Default Action</span>
-      <span id="firewallDefaultAction">{{ initial_meta.default_action or 'accept' }}</span>
+    <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+      <div class="flex items-center gap-2 mb-2 text-gray-400">
+        <span class="material-icons text-xs">gavel</span>
+        <span class="font-medium text-xs">Default Action</span>
+      </div>
+      {% set default_action = (initial_meta.default_action or 'accept')|lower %}
+      {% if default_action == 'accept' %}
+        <span id="firewallDefaultAction" class="text-green-400 font-bold uppercase text-sm">{{ default_action }}</span>
+      {% elif default_action == 'drop' %}
+        <span id="firewallDefaultAction" class="text-red-500 font-bold uppercase text-sm">{{ default_action }}</span>
+      {% elif default_action == 'reject' %}
+        <span id="firewallDefaultAction" class="text-amber-400 font-bold uppercase text-sm">{{ default_action }}</span>
+      {% else %}
+        <span id="firewallDefaultAction" class="text-orange-300 font-bold uppercase text-sm">{{ default_action }}</span>
+      {% endif %}
     </div>
-    <div>
-      <span class="text-gray-400 block">Rule Count</span>
-      <span id="firewallRuleCount">{{ initial_rules|length }}</span>
+    <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+      <div class="flex items-center gap-2 mb-2 text-gray-400">
+        <span class="material-icons text-xs">format_list_numbered</span>
+        <span class="font-medium text-xs">Rule Count</span>
+      </div>
+      <span id="firewallRuleCount" class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{{ initial_rules|length }}</span>
     </div>
   </div>
 </div>

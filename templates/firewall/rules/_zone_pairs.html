@@ -1,6 +1,14 @@
-<aside class="w-[14rem] bg-gray-900 border-r border-gray-700">
-  <h3 class="text-lg font-semibold p-4 border-b border-gray-700">Zone Pairs</h3>
-  <ul class="divide-y divide-gray-700" id="firewallPairList">
+<aside class="w-64 bg-gradient-to-br from-gray-800 to-gray-900 border-r border-gray-700/50">
+  <div class="p-4 border-b border-gray-700/50 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+    <div class="flex items-center gap-2 mb-1">
+      <div class="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
+        <span class="material-icons text-blue-400 text-sm">swap_horiz</span>
+      </div>
+      <h3 class="text-lg font-bold text-white">Zone Pairs</h3>
+    </div>
+    <p class="text-xs text-gray-400">Select a firewall rule set</p>
+  </div>
+  <ul class="divide-y divide-gray-800/50" id="firewallPairList">
     {% if initial_zone %}
       {% set zone_pairs = firewall_zone_groups.get(initial_zone, []) %}
       {% if zone_pairs %}
@@ -8,28 +16,42 @@
         {% set pair_meta = firewall_metadata.get(pair.name, {}) %}
         <li>
           <button
-            class="w-full text-left px-4 py-3 flex items-center justify-between rounded firewall-pair-item {{ 'bg-gray-700' if pair.name == initial_name else 'hover:bg-gray-700' }}"
+            class="group w-full text-left px-4 py-3 flex items-center justify-between firewall-pair-item transition-all {{ 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-l-4 border-blue-500' if pair.name == initial_name else 'hover:bg-blue-500/10 border-l-4 border-transparent hover:border-blue-500/50' }}"
             data-firewall-name="{{ pair.name }}"
             data-zone="{{ initial_zone|upper }}"
           >
-            <div class="flex flex-col leading-tight">
-              <span class="font-semibold text-white">{{ pair.name }}</span>
-              <span class="text-xs text-indigo-300 uppercase tracking-wide">
-                {{ pair_meta.zone_label or (initial_zone ~ ' -> ' ~ (pair.destination or '')) }}
+            <div class="flex flex-col leading-tight flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="material-icons text-xs text-blue-400">shield</span>
+                <span class="font-bold text-white group-hover:text-blue-300 transition-colors">{{ pair.name }}</span>
+              </div>
+              <span class="text-xs text-blue-300 font-medium flex items-center gap-1">
+                <span class="material-icons text-[10px]">arrow_forward</span>
+                {{ pair_meta.zone_label or (initial_zone ~ ' → ' ~ (pair.destination or '')) }}
               </span>
               {% if pair_meta.description %}
-              <span class="text-xs text-gray-400">{{ pair_meta.description }}</span>
+              <span class="text-xs text-gray-400 mt-1 line-clamp-1">{{ pair_meta.description }}</span>
               {% endif %}
             </div>
-            <span class="material-icons text-sm text-gray-400">chevron_right</span>
+            <span class="material-icons text-sm text-gray-400 group-hover:text-blue-400 group-hover:translate-x-1 transition-all">chevron_right</span>
           </button>
         </li>
         {% endfor %}
       {% else %}
-        <li class="p-4 text-sm text-gray-400">No firewall rule sets for {{ initial_zone }}.</li>
+        <li class="p-6 text-sm text-gray-400 text-center">
+          <div class="flex flex-col items-center gap-2">
+            <span class="material-icons text-2xl text-gray-600">warning</span>
+            <span>No rule sets for {{ initial_zone }}</span>
+          </div>
+        </li>
       {% endif %}
     {% else %}
-    <li class="p-4 text-sm text-gray-400">No firewall rule sets available.</li>
+    <li class="p-6 text-sm text-gray-400 text-center">
+      <div class="flex flex-col items-center gap-2">
+        <span class="material-icons text-2xl text-gray-600">info</span>
+        <span>Select a zone first</span>
+      </div>
+    </li>
     {% endif %}
   </ul>
 </aside>

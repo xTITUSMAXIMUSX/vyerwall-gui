@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from flask import Blueprint, jsonify, render_template, request, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, url_for
 
 from auth_utils import login_required
+from config_manager import mark_config_dirty
 from interfaces.device import configure_delete, configure_set
 from interfaces.zone import (
     build_zone_binding_commands,
@@ -192,6 +193,9 @@ def api_create_zone():
     if not success:
         return jsonify({"status": "error", "message": error_message or "Failed to create zone."}), 500
 
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
+
     data = _load_dashboard_payload()
     return jsonify({"status": "ok", "data": data})
 
@@ -243,6 +247,9 @@ def api_delete_zone():
         if not success:
             return jsonify({"status": "error", "message": error_message or "Failed to delete zone."}), 500
 
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
+
     data = _load_dashboard_payload()
     return jsonify({"status": "ok", "data": data})
 
@@ -270,6 +277,9 @@ def api_update_membership():
         success, error_message = configure_set(commands, error_context=f"update zone {zone_name} membership") if action == "add" else configure_delete(commands, error_context=f"update zone {zone_name} membership")
         if not success:
             return jsonify({"status": "error", "message": error_message or "Failed to update zone membership."}), 500
+
+    # Mark configuration as dirty (unsaved changes)
+    mark_config_dirty()
 
     data = _load_dashboard_payload()
     return jsonify({"status": "ok", "data": data})
