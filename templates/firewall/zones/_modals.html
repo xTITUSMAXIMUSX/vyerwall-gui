@@ -1,26 +1,43 @@
 <!-- Create Zone Modal -->
-<div id="zoneCreateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-gray-900 rounded-xl shadow-lg w-[26rem] p-6 border border-gray-700">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-semibold text-white">Create Zone</h3>
-      <button class="material-icons text-gray-400 hover:text-white" data-zone-modal-close="create">close</button>
+<div id="zoneCreateModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-purple-500/30 overflow-hidden animate-fadeIn">
+    <div class="px-6 py-5 border-b border-gray-700/50 bg-gradient-to-r from-purple-900/30 to-pink-900/30">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+            <span class="material-icons text-white">add_circle</span>
+          </div>
+          <h3 class="text-xl font-bold text-white">Create Zone</h3>
+        </div>
+        <button class="material-icons text-gray-400 hover:text-white hover:rotate-90 transition-all" data-zone-modal-close="create">close</button>
+      </div>
     </div>
-    <form id="zoneCreateForm" class="space-y-4">
+    <form id="zoneCreateForm" class="p-6 space-y-5">
       <div>
-        <label for="createZoneName" class="block text-sm text-gray-300 mb-1">Zone Name</label>
+        <label for="createZoneName" class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">label</span>
+          Zone Name
+        </label>
         <input id="createZoneName" name="zone" type="text" maxlength="32" required placeholder="e.g. DMZ"
-          class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none uppercase tracking-wide">
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none uppercase tracking-wide font-semibold transition-all">
       </div>
       <div>
-        <label for="createZoneInterface" class="block text-sm text-gray-300 mb-1">Assign Interface</label>
+        <label for="createZoneInterface" class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">settings_ethernet</span>
+          Assign Interface
+        </label>
         <select id="createZoneInterface" name="interface" required
-          class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"></select>
-        <p class="text-xs text-gray-500 mt-1">Select an interface to seed the zone. Additional members can be assigned later.</p>
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"></select>
+        <p class="flex items-start gap-1.5 text-xs text-gray-500 mt-2">
+          <span class="material-icons text-xs mt-0.5">info</span>
+          <span>Select an interface to seed the zone. Additional members can be assigned later.</span>
+        </p>
       </div>
-      <div class="flex justify-end gap-3">
-        <button type="button" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded" data-zone-modal-close="create">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center gap-2" id="zoneCreateSubmit">
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-all" data-zone-modal-close="create">Cancel</button>
+        <button type="submit" class="group px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transition-all flex items-center gap-2" id="zoneCreateSubmit">
           <span class="material-icons text-sm animate-spin hidden" id="zoneCreateSpinner">refresh</span>
+          <span class="material-icons text-sm group-hover:scale-110 transition-transform" id="zoneCreateIcon">add_circle</span>
           <span id="zoneCreateLabel">Create Zone</span>
         </button>
       </div>
@@ -29,48 +46,78 @@
 </div>
 
 <!-- Delete Zone Modal -->
-<div id="zoneDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-gray-900 rounded-xl shadow-lg w-[24rem] p-6 border border-gray-700">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-semibold text-white">Delete Zone</h3>
-      <button class="material-icons text-gray-400 hover:text-white" data-zone-modal-close="delete">close</button>
+<div id="zoneDeleteModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-red-500/30 overflow-hidden animate-fadeIn">
+    <div class="px-6 py-5 border-b border-gray-700/50 bg-gradient-to-r from-red-900/30 to-red-800/30">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+            <span class="material-icons text-white">warning</span>
+          </div>
+          <h3 class="text-xl font-bold text-white">Delete Zone</h3>
+        </div>
+        <button class="material-icons text-gray-400 hover:text-white hover:rotate-90 transition-all" data-zone-modal-close="delete">close</button>
+      </div>
     </div>
-    <p class="text-gray-300 mb-6" id="zoneDeleteMessage">Delete zone?</p>
-    <div class="flex justify-end gap-3">
-      <button class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded" data-zone-modal-close="delete">Cancel</button>
-      <button id="zoneDeleteConfirm" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white flex items-center gap-2">
-        <span class="material-icons text-sm animate-spin hidden" id="zoneDeleteSpinner">refresh</span>
-        <span id="zoneDeleteLabel">Delete</span>
-      </button>
+    <div class="p-6">
+      <div class="flex items-start gap-3 mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+        <span class="material-icons text-red-400 mt-0.5">info</span>
+        <p class="text-gray-300 text-sm" id="zoneDeleteMessage">Delete zone?</p>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-all" data-zone-modal-close="delete">Cancel</button>
+        <button id="zoneDeleteConfirm" class="group px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+          <span class="material-icons text-sm animate-spin hidden" id="zoneDeleteSpinner">refresh</span>
+          <span class="material-icons text-sm group-hover:scale-110 transition-transform" id="zoneDeleteIcon">delete</span>
+          <span id="zoneDeleteLabel">Delete</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Manage Membership Modal -->
-<div id="zoneManageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-gray-900 rounded-xl shadow-lg w-[32rem] p-6 border border-gray-700">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-semibold text-white">Manage Zone</h3>
-      <button class="material-icons text-gray-400 hover:text-white" data-zone-modal-close="manage">close</button>
+<div id="zoneManageModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-lg border border-blue-500/30 overflow-hidden animate-fadeIn">
+    <div class="px-6 py-5 border-b border-gray-700/50 bg-gradient-to-r from-blue-900/30 to-purple-900/30">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <span class="material-icons text-white">tune</span>
+          </div>
+          <h3 class="text-xl font-bold text-white">Manage Zone</h3>
+        </div>
+        <button class="material-icons text-gray-400 hover:text-white hover:rotate-90 transition-all" data-zone-modal-close="manage">close</button>
+      </div>
     </div>
-    <div class="space-y-4" id="zoneManageContent">
-      <div>
-        <span class="text-gray-400 text-sm">Zone</span>
-        <div class="text-lg font-semibold text-white" id="manageZoneName">--</div>
+    <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar" id="zoneManageContent">
+      <div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-400 mb-2">
+          <span class="material-icons text-xs text-purple-400">location_on</span>
+          Zone Name
+        </div>
+        <div class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent" id="manageZoneName">--</div>
       </div>
       <div>
-        <span class="text-gray-400 text-sm">Members</span>
-        <div id="manageZoneMembers" class="flex flex-wrap gap-2 mt-2"></div>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-3">
+          <span class="material-icons text-xs text-blue-400">device_hub</span>
+          Interface Members
+        </div>
+        <div id="manageZoneMembers" class="flex flex-wrap gap-2 min-h-[3rem] p-3 bg-gray-800/30 rounded-xl border border-gray-700/50"></div>
       </div>
-      <form id="zoneAddMemberForm" class="space-y-3">
+      <form id="zoneAddMemberForm" class="space-y-4 pt-4 border-t border-gray-700/50">
         <div>
-          <label for="zoneAddInterface" class="block text-sm text-gray-300 mb-1">Assign Interface</label>
-          <select id="zoneAddInterface" class="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"></select>
+          <label for="zoneAddInterface" class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <span class="material-icons text-xs text-cyan-400">settings_ethernet</span>
+            Assign New Interface
+          </label>
+          <select id="zoneAddInterface" class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"></select>
         </div>
         <div class="flex justify-end gap-3">
-          <button type="button" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded" data-zone-modal-close="manage">Close</button>
-          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center gap-2" id="zoneAddMemberSubmit">
+          <button type="button" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-all" data-zone-modal-close="manage">Close</button>
+          <button type="submit" class="group px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transition-all flex items-center gap-2" id="zoneAddMemberSubmit">
             <span class="material-icons text-sm animate-spin hidden" id="zoneAddMemberSpinner">refresh</span>
+            <span class="material-icons text-sm group-hover:scale-110 transition-transform" id="zoneAddMemberIcon">add</span>
             <span id="zoneAddMemberLabel">Add Interface</span>
           </button>
         </div>

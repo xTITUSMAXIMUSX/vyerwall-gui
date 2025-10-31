@@ -3,54 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VyOS Login</title>
+  <title>Login - VyerWall</title>
+
   <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 flex items-center justify-center h-screen">
 
-  <div class="bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-md">
-    <!-- Logo / Title -->
-    <div class="flex items-center justify-center gap-2 mb-8">
-      <h1 class="text-2xl font-bold text-orange-400">Vyerwall-GUI Login</h1>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
+
+  <style>
+    /* Animated gradient background */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .animated-gradient {
+      background: linear-gradient(-45deg, #1f2937, #111827, #374151, #1f2937);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+
+    /* Floating animation */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .float-animation {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    /* Pulse glow effect */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(249, 115, 22, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(249, 115, 22, 0.6); }
+    }
+
+    .pulse-glow {
+      animation: pulseGlow 3s ease-in-out infinite;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(31, 41, 55, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(249, 115, 22, 0.5);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(249, 115, 22, 0.8);
+    }
+  </style>
+</head>
+<body class="animated-gradient flex items-center justify-center min-h-screen p-4 overflow-hidden relative">
+
+  <!-- Decorative background elements -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+  </div>
+
+  <!-- Login Container -->
+  <div class="relative w-full max-w-md">
+    <!-- Logo Badge - Floating -->
+    <div class="flex justify-center mb-8 float-animation">
+      <div class="relative">
+        <div class="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl blur-xl opacity-50 pulse-glow"></div>
+        <div class="relative w-24 h-24 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
+          <span class="material-icons text-white text-5xl">shield</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="mb-4">
-          {% for category, message in messages %}
-            <div class="text-sm text-red-400">{{ message }}</div>
-          {% endfor %}
+    <!-- Login Card -->
+    <div class="bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-700/50 overflow-hidden">
+      <!-- Header -->
+      <div class="px-8 pt-8 pb-6 border-b border-gray-700/50 bg-gradient-to-r from-orange-900/20 to-red-900/20">
+        <div class="text-center">
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent mb-2">
+            VyerWall
+          </h1>
+          <p class="text-gray-400 text-sm font-medium">Network Security Manager</p>
         </div>
-      {% endif %}
-    {% endwith %}
-
-    <!-- Login Form -->
-    <form method="POST" action="{{ url_for('login') }}" class="space-y-6">
-      <div>
-        <label for="username" class="block text-sm mb-2 text-white">Username</label>
-        <input type="text" id="username" name="username" required
-               class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400">
       </div>
 
-      <div>
-        <label for="password" class="block text-sm mb-2 text-white">Password</label>
-        <input type="password" id="password" name="password" required
-               class="w-full px-3 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400">
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="px-8 pt-6">
+            {% for category, message in messages %}
+              <div class="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-4 animate-pulse">
+                <span class="material-icons text-red-400 mt-0.5">error</span>
+                <div>
+                  <p class="text-sm font-medium text-red-300">{{ message }}</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Login Form -->
+      <form method="POST" action="{{ url_for('login') }}" class="p-8 space-y-6">
+        <!-- Username Field -->
+        <div class="space-y-2">
+          <label for="username" class="flex items-center gap-2 text-sm font-medium text-gray-300">
+            <span class="material-icons text-xs text-orange-400">person</span>
+            Username
+          </label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <span class="material-icons-outlined text-gray-500 group-focus-within:text-orange-400 transition-colors">account_circle</span>
+            </div>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              autofocus
+              class="w-full pl-12 pr-4 py-3.5 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all placeholder-gray-500"
+              placeholder="Enter your username">
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="space-y-2">
+          <label for="password" class="flex items-center gap-2 text-sm font-medium text-gray-300">
+            <span class="material-icons text-xs text-orange-400">lock</span>
+            Password
+          </label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <span class="material-icons-outlined text-gray-500 group-focus-within:text-orange-400 transition-colors">lock</span>
+            </div>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              class="w-full pl-12 pr-4 py-3.5 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all placeholder-gray-500"
+              placeholder="Enter your password">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="group relative w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <span class="relative flex items-center justify-center gap-2">
+            <span class="material-icons group-hover:scale-110 transition-transform">login</span>
+            <span>Sign In</span>
+          </span>
+        </button>
+      </form>
+
+      <!-- Footer -->
+      <div class="px-8 pb-8 pt-4 border-t border-gray-700/50">
+        <div class="flex items-center justify-center gap-2 text-gray-500 text-sm">
+          <span class="material-icons text-xs">verified_user</span>
+          <span>Built for VyOS 1.5</span>
+        </div>
+        <p class="text-center text-gray-600 text-xs mt-2">
+          © 2024 VyerWall • Secure Network Management
+        </p>
       </div>
+    </div>
 
-      <button type="submit"
-              class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg transition">
-        Log In
-      </button>
-    </form>
-
-    <!-- Footer -->
-    <p class="text-center text-gray-400 text-sm mt-6">
-      Built for VyOSv1.5
-    </p>
+    <!-- Decorative elements -->
+    <div class="absolute -z-10 -top-10 -left-10 w-40 h-40 bg-orange-500/10 rounded-full blur-2xl"></div>
+    <div class="absolute -z-10 -bottom-10 -right-10 w-40 h-40 bg-red-500/10 rounded-full blur-2xl"></div>
   </div>
+
+  <!-- Auto-focus enhancement -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const usernameInput = document.getElementById('username');
+      if (usernameInput && !usernameInput.value) {
+        usernameInput.focus();
+      }
+    });
+  </script>
 
 </body>
 </html>

@@ -1,0 +1,215 @@
+<div class="space-y-3" data-dynamic-content>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Send updates
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Enable or disable DDNS updates for this scope. Leave blank to inherit from the parent.">
+          help_outline
+        </span>
+      </label>
+      <select data-field="send_updates"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm">
+        <option value="">Inherit</option>
+        <option value="enable">enable</option>
+        <option value="disable">disable</option>
+      </select>
+    </div>
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Override no-update
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Ignore client requests to skip DNS updates.">
+          help_outline
+        </span>
+      </label>
+      <select data-field="override_no_update"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm">
+        <option value="">Inherit</option>
+        <option value="enable">enable</option>
+        <option value="disable">disable</option>
+      </select>
+    </div>
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Override client update
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Force both forward and reverse updates regardless of client preference.">
+          help_outline
+        </span>
+      </label>
+      <select data-field="override_client_update"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm">
+        <option value="">Inherit</option>
+        <option value="enable">enable</option>
+        <option value="disable">disable</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Update on renew
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="When enabled, send DDNS updates on every DHCP renewal.">
+          help_outline
+        </span>
+      </label>
+      <select data-field="update_on_renew"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm">
+        <option value="">Inherit</option>
+        <option value="enable">enable</option>
+        <option value="disable">disable</option>
+      </select>
+    </div>
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Conflict resolution
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Enable the RFC4703 conflict resolution algorithm.">
+          help_outline
+        </span>
+      </label>
+      <select data-field="conflict_resolution"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm">
+        <option value="">Inherit</option>
+        <option value="enable">enable</option>
+        <option value="disable">disable</option>
+      </select>
+    </div>
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Replace client name
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Specify when the DHCP server should replace client-provided hostnames.">
+          help_outline
+        </span>
+      </label>
+      <select data-field="replace_client_name"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm">
+        <option value="">Inherit</option>
+        <option value="never">never</option>
+        <option value="always">always</option>
+        <option value="when-present">when-present</option>
+        <option value="when-not-present">when-not-present</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Generated prefix
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Prefix string used when synthesizing hostnames.">
+          help_outline
+        </span>
+      </label>
+      <input data-field="generated_prefix" type="text"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm"
+        placeholder="ip">
+    </div>
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Qualifying suffix
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Suffix appended to generated hostnames.">
+          help_outline
+        </span>
+      </label>
+      <input data-field="qualifying_suffix" type="text"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm"
+        placeholder="example.com">
+    </div>
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        TTL percent
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="TTL for generated DNS records as a percentage of the lease time (0-100).">
+          help_outline
+        </span>
+      </label>
+      <input data-field="ttl_percent" type="number" min="0" max="100"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm"
+        placeholder="50">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Invalid characters
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Characters replaced in client hostnames (hostname-char-set).">
+          help_outline
+        </span>
+      </label>
+      <input data-field="hostname_char_set" type="text"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm"
+        placeholder="\" /@">
+    </div>
+    <div>
+      <label class="flex items-center gap-1 text-xs text-gray-300 uppercase tracking-wide">
+        Replacement string
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Character sequence used in place of invalid hostname characters.">
+          help_outline
+        </span>
+      </label>
+      <input data-field="hostname_char_replacement" type="text"
+        class="w-full mt-1 p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none text-sm"
+        placeholder="-">
+    </div>
+  </div>
+
+  <div class="border border-gray-700 rounded-lg p-3 space-y-2" data-dns-tsig>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2 text-xs text-gray-300 uppercase tracking-wide">
+        TSIG keys
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Authentication keys for DDNS updates. Provide the key name, algorithm, and secret.">
+          help_outline
+        </span>
+      </div>
+      <button type="button" class="text-xs text-blue-300 hover:text-blue-200 font-medium" data-action="add-tsig">
+        + Add key
+      </button>
+    </div>
+    <div class="space-y-2" data-tsig-list></div>
+  </div>
+
+  <div class="border border-gray-700 rounded-lg p-3 space-y-2" data-dns-forward>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2 text-xs text-gray-300 uppercase tracking-wide">
+        Forward domains
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="DNS zones updated with forward (A) records. Add DNS servers for each domain.">
+          help_outline
+        </span>
+      </div>
+      <button type="button" class="text-xs text-blue-300 hover:text-blue-200 font-medium" data-action="add-domain"
+        data-domain-type="forward">
+        + Add domain
+      </button>
+    </div>
+    <div class="space-y-2" data-domain-list="forward"></div>
+  </div>
+
+  <div class="border border-gray-700 rounded-lg p-3 space-y-2" data-dns-reverse>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2 text-xs text-gray-300 uppercase tracking-wide">
+        Reverse domains
+        <span class="material-icons text-[10px] text-blue-300 cursor-help"
+          title="Reverse zones updated with PTR records. Add DNS servers for each domain.">
+          help_outline
+        </span>
+      </div>
+      <button type="button" class="text-xs text-blue-300 hover:text-blue-200 font-medium" data-action="add-domain"
+        data-domain-type="reverse">
+        + Add domain
+      </button>
+    </div>
+    <div class="space-y-2" data-domain-list="reverse"></div>
+  </div>
+</div>

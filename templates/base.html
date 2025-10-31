@@ -7,7 +7,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}{% endblock %}</title>
+  <title>{% block title %}{% endblock %} - VyerWall</title>
 
   <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,121 +17,203 @@
   <!-- Material Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
+
+  <style>
+    /* Custom scrollbar styling */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(31, 41, 55, 0.5);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.8);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(107, 114, 128, 1);
+    }
+
+    /* Smooth transitions */
+    * {
+      transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 150ms;
+    }
+  </style>
 </head>
 
-<body class="bg-gray-900 text-gray-100 flex h-screen">
+<body class="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-100 flex h-screen overflow-hidden">
 
   <!-- Sidebar -->
-  <aside class="w-64 bg-gray-800 p-4 flex flex-col">
-    <div class="flex items-center gap-2 text-lg font-bold text-orange-400 mb-8">
-      Vyerwall-GUI
+  <aside class="w-64 bg-gradient-to-b from-gray-800 to-gray-900 border-r border-gray-700/50 flex flex-col shadow-2xl">
+    <!-- Logo/Brand -->
+    <div class="p-6 border-b border-gray-700/50">
+      <div class="flex items-center gap-3 group cursor-pointer">
+        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+          <span class="material-icons text-white text-xl">shield</span>
+        </div>
+        <div>
+          <div class="text-lg font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+            VyerWall
+          </div>
+          <div class="text-xs text-gray-500">Network Manager</div>
+        </div>
+      </div>
     </div>
 
-    <nav class="flex flex-col gap-2">
-      <a href="{{ url_for('dashboard.dashboard') }}" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='dashboard' %}bg-gray-700{% endif %}">
-        <span class="material-icons">dashboard</span> Dashboard
+    <!-- Navigation -->
+    <nav class="flex-1 flex flex-col gap-1 p-3 overflow-y-auto custom-scrollbar">
+      <a href="{{ url_for('dashboard.dashboard') }}"
+        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='dashboard' %}bg-gradient-to-r from-blue-600/20 to-blue-500/10 border-l-4 border-blue-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+        <span class="material-icons text-blue-400 group-hover:scale-110 transition-transform">dashboard</span>
+        <span class="font-medium group-hover:text-blue-300">Dashboard</span>
       </a>
 
-      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='alerts' %}bg-gray-700{% endif %}">
-        <span class="material-icons">notifications</span> Alerts
-        <span class="ml-auto bg-red-500 text-xs px-2 py-0.5 rounded-full font-bold">2</span>
+      <a href="#"
+        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='alerts' %}bg-gradient-to-r from-red-600/20 to-red-500/10 border-l-4 border-red-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+        <span class="material-icons text-red-400 group-hover:scale-110 transition-transform">notifications</span>
+        <span class="font-medium group-hover:text-red-300 flex-1">Alerts</span>
+        <span class="bg-red-500 text-xs px-2 py-0.5 rounded-full font-bold shadow-lg">2</span>
       </a>
 
       <!-- FIREWALL COLLAPSIBLE MENU -->
       <div>
         <button @click="openFirewall = !openFirewall"
-          class="w-full text-left p-2 rounded hover:bg-gray-700 flex items-center justify-between {% if active=='firewall' %}bg-gray-700{% endif %}">
-          <div class="flex items-center gap-2">
-            <span class="material-icons">security</span> Firewall
-          </div>
-          <span class="material-icons text-sm transition-transform"
+          class="group w-full text-left p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='firewall' %}bg-gradient-to-r from-purple-600/20 to-purple-500/10 border-l-4 border-purple-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+          <span class="material-icons text-purple-400 group-hover:scale-110 transition-transform">security</span>
+          <span class="font-medium group-hover:text-purple-300 flex-1">Firewall</span>
+          <span class="material-icons text-sm text-gray-500 transition-transform duration-300"
             :class="{ 'rotate-180': openFirewall }">expand_more</span>
         </button>
 
-        <div x-show="openFirewall" x-transition class="flex flex-col pl-8 mt-1 space-y-1">
+        <div x-show="openFirewall"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="flex flex-col pl-6 mt-1 space-y-1">
           <a href="{{ url_for('firewall_rules.overview') }}"
-            class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='firewall' and (active_subnav|default(None)) != 'zones' %}bg-gray-700{% endif %}">
-            <span class="material-icons-outlined text-sm">rule</span> Rules
+            class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm {% if active=='firewall' and (active_subnav|default(None)) != 'zones' %}bg-gray-700/50 text-purple-300{% else %}text-gray-400{% endif %} transition-all">
+            <span class="material-icons-outlined text-xs">rule</span>
+            <span class="group-hover:text-gray-200">Rules</span>
           </a>
           <a href="{{ url_for('firewall_zone.dashboard') }}"
-             class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='firewall' and (active_subnav|default(None))=='zones' %}bg-gray-700{% endif %}">
-            <span class="material-icons-outlined text-sm">dashboard_customize</span> Zones
+             class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm {% if active=='firewall' and (active_subnav|default(None))=='zones' %}bg-gray-700/50 text-purple-300{% else %}text-gray-400{% endif %} transition-all">
+            <span class="material-icons-outlined text-xs">dashboard_customize</span>
+            <span class="group-hover:text-gray-200">Zones</span>
           </a>
-          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
-            <span class="material-icons-outlined text-sm">swap_horiz</span> NAT
+          <a href="#" class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm text-gray-400 transition-all">
+            <span class="material-icons-outlined text-xs">swap_horiz</span>
+            <span class="group-hover:text-gray-200">NAT</span>
           </a>
         </div>
       </div>
 
-      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='vpn' %}bg-gray-700{% endif %}">
-        <span class="material-icons">vpn_lock</span> VPN
+      <a href="#"
+        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='vpn' %}bg-gradient-to-r from-green-600/20 to-green-500/10 border-l-4 border-green-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+        <span class="material-icons text-green-400 group-hover:scale-110 transition-transform">vpn_lock</span>
+        <span class="font-medium group-hover:text-green-300">VPN</span>
       </a>
 
-      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='routing' %}bg-gray-700{% endif %}">
-        <span class="material-icons">alt_route</span> Routing
+      <a href="#"
+        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='routing' %}bg-gradient-to-r from-yellow-600/20 to-yellow-500/10 border-l-4 border-yellow-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+        <span class="material-icons text-yellow-400 group-hover:scale-110 transition-transform">alt_route</span>
+        <span class="font-medium group-hover:text-yellow-300">Routing</span>
       </a>
 
       <!-- SERVICES COLLAPSIBLE MENU -->
       <div>
         <button @click="openServices = !openServices"
-          class="w-full text-left p-2 rounded hover:bg-gray-700 flex items-center justify-between {% if active=='services' %}bg-gray-700{% endif %}">
-          <div class="flex items-center gap-2">
-            <span class="material-icons">build</span> Services
-          </div>
-          <span class="material-icons text-sm transition-transform"
+          class="group w-full text-left p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='services' %}bg-gradient-to-r from-blue-600/20 to-blue-500/10 border-l-4 border-blue-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+          <span class="material-icons text-blue-400 group-hover:scale-110 transition-transform">build</span>
+          <span class="font-medium group-hover:text-blue-300 flex-1">Services</span>
+          <span class="material-icons text-sm text-gray-500 transition-transform duration-300"
             :class="{ 'rotate-180': openServices }">expand_more</span>
         </button>
 
-        <div x-show="openServices" x-transition class="flex flex-col pl-8 mt-1 space-y-1">
-          <a href="{{ url_for('dhcp.dhcp') }}" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
-            <span class="material-icons-outlined text-sm">dns</span> DHCP
+        <div x-show="openServices"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="flex flex-col pl-6 mt-1 space-y-1">
+          <a href="{{ url_for('dhcp.dhcp') }}" class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm text-gray-400 transition-all">
+            <span class="material-icons-outlined text-xs">dns</span>
+            <span class="group-hover:text-gray-200">DHCP</span>
           </a>
-          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
-            <span class="material-icons-outlined text-sm">schedule</span> NTP
+          <a href="#" class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm text-gray-400 transition-all">
+            <span class="material-icons-outlined text-xs">schedule</span>
+            <span class="group-hover:text-gray-200">NTP</span>
           </a>
-          <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2">
-            <span class="material-icons-outlined text-sm">public</span> HTTPS API
+          <a href="#" class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm text-gray-400 transition-all">
+            <span class="material-icons-outlined text-xs">public</span>
+            <span class="group-hover:text-gray-200">HTTPS API</span>
           </a>
         </div>
       </div>
 
-      <a href="{{ url_for('interfaces.interfaces') }}" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='interfaces' %}bg-gray-700{% endif %}">
-        <span class="material-icons">settings_ethernet</span> Interfaces
+      <a href="{{ url_for('interfaces.interfaces') }}"
+        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='interfaces' %}bg-gradient-to-r from-cyan-600/20 to-cyan-500/10 border-l-4 border-cyan-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+        <span class="material-icons text-cyan-400 group-hover:scale-110 transition-transform">settings_ethernet</span>
+        <span class="font-medium group-hover:text-cyan-300">Interfaces</span>
       </a>
 
-      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='logs' %}bg-gray-700{% endif %}">
-        <span class="material-icons">article</span> Logs
+      <a href="#"
+        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='logs' %}bg-gradient-to-r from-indigo-600/20 to-indigo-500/10 border-l-4 border-indigo-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+        <span class="material-icons text-indigo-400 group-hover:scale-110 transition-transform">article</span>
+        <span class="font-medium group-hover:text-indigo-300">Logs</span>
       </a>
 
-      <a href="#" class="p-2 rounded hover:bg-gray-700 flex items-center gap-2 {% if active=='system' %}bg-gray-700{% endif %}">
-        <span class="material-icons">memory</span> System
+      <a href="#"
+        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='system' %}bg-gradient-to-r from-pink-600/20 to-pink-500/10 border-l-4 border-pink-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+        <span class="material-icons text-pink-400 group-hover:scale-110 transition-transform">memory</span>
+        <span class="font-medium group-hover:text-pink-300">System</span>
       </a>
     </nav>
+
+    <!-- User section at bottom -->
+    <div class="p-4 border-t border-gray-700/50 bg-gray-800/50">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+          <span class="material-icons text-white text-lg">person</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-semibold text-gray-200 truncate">Administrator</div>
+          <div class="text-xs text-gray-500">Connected</div>
+        </div>
+      </div>
+      {% if save_config == True %}
+      <form method="POST" action="{{ url_for('logout') }}" class="mb-2">
+        <button class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all text-sm font-medium flex items-center justify-center gap-2">
+          <span class="material-icons text-sm">save</span>
+          Save Config
+        </button>
+      </form>
+      {% endif %}
+      <form method="POST" action="{{ url_for('logout') }}">
+        <button class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all text-sm font-medium flex items-center justify-center gap-2">
+          <span class="material-icons text-sm">logout</span>
+          Log Out
+        </button>
+      </form>
+    </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 flex flex-col">
+  <main class="flex-1 flex flex-col overflow-hidden">
     <!-- Top bar -->
-    <header class="flex justify-between items-center bg-gray-800 p-4 border-b border-gray-700">
-      <h1 class="text-xl font-bold">{% block header %}{% endblock %}</h1>
-      {% if save_config == True %}
-      <div class="flex items-center gap-4">
-        <form method="POST" action="{{ url_for('logout') }}">
-          <button class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Save Config</button>
-        </form>
-        {% endif %}
-      </div>
-      <div class="flex items-center gap-4">
-        <form method="POST" action="{{ url_for('logout') }}">
-          <button class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Log Out</button>
-        </form>
+    <header class="bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700/50 shadow-xl">
+      <div class="px-6 py-4">
+        {% block header %}{% endblock %}
       </div>
     </header>
 
-    <section class="p-6 overflow-y-auto">
+    <!-- Content Area -->
+    <section class="flex-1 p-6 overflow-y-auto custom-scrollbar bg-gray-900/50">
       {% block content %}{% endblock %}
     </section>
   </main>
+
   {% block scripts %}{% endblock %}
 </body>
 </html>

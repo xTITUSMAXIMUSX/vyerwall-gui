@@ -1,14 +1,51 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-  <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow">
-    <div class="text-sm text-gray-400">Total Zones</div>
-    <div class="text-2xl font-semibold text-white">{{ summary.total_zones }}</div>
+  <!-- Total Zones Card -->
+  <div class="group bg-gradient-to-br from-gray-800 to-gray-900 border border-purple-500/30 rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:border-purple-500/50 transition-all">
+    <div class="flex items-center justify-between mb-3">
+      <div class="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+        <span class="material-icons text-purple-400 text-2xl">dashboard_customize</span>
+      </div>
+      <div class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+        {{ summary.total_zones }}
+      </div>
+    </div>
+    <div class="text-sm font-medium text-gray-300">Total Zones</div>
+    <div class="text-xs text-gray-500 mt-1">Active security zones</div>
   </div>
-  <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow">
-    <div class="text-sm text-gray-400">Firewall Rule Sets</div>
-    <div class="text-2xl font-semibold text-white">{{ summary.total_firewall_sets }}</div>
+
+  <!-- Firewall Rule Sets Card -->
+  <div class="group bg-gradient-to-br from-gray-800 to-gray-900 border border-blue-500/30 rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:border-blue-500/50 transition-all">
+    <div class="flex items-center justify-between mb-3">
+      <div class="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+        <span class="material-icons text-blue-400 text-2xl">shield</span>
+      </div>
+      <div class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text text-transparent">
+        {{ summary.total_firewall_sets }}
+      </div>
+    </div>
+    <div class="text-sm font-medium text-gray-300">Firewall Rule Sets</div>
+    <div class="text-xs text-gray-500 mt-1">Zone-pair rules configured</div>
   </div>
-  <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 shadow">
-    <div class="text-sm text-gray-400">Unassigned Interfaces</div>
-    <div class="text-2xl font-semibold text-white">{{ summary.unassigned_interfaces }}</div>
+
+  <!-- Unassigned Interfaces Card -->
+  <div class="group bg-gradient-to-br from-gray-800 to-gray-900 border border-{% if summary.unassigned_interfaces > 0 %}orange{% else %}green{% endif %}-500/30 rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:border-{% if summary.unassigned_interfaces > 0 %}orange{% else %}green{% endif %}-500/50 transition-all">
+    <div class="flex items-center justify-between mb-3">
+      <div class="w-12 h-12 bg-gradient-to-br from-{% if summary.unassigned_interfaces > 0 %}orange{% else %}green{% endif %}-500/20 to-{% if summary.unassigned_interfaces > 0 %}orange{% else %}green{% endif %}-600/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+        <span class="material-icons text-{% if summary.unassigned_interfaces > 0 %}orange{% else %}green{% endif %}-400 text-2xl">
+          {% if summary.unassigned_interfaces > 0 %}warning{% else %}check_circle{% endif %}
+        </span>
+      </div>
+      <div class="text-4xl font-bold bg-gradient-to-r from-{% if summary.unassigned_interfaces > 0 %}orange{% else %}green{% endif %}-400 to-{% if summary.unassigned_interfaces > 0 %}red{% else %}emerald{% endif %}-500 bg-clip-text text-transparent">
+        {{ summary.unassigned_interfaces }}
+      </div>
+    </div>
+    <div class="text-sm font-medium text-gray-300">Unassigned Interfaces</div>
+    <div class="text-xs text-gray-500 mt-1">
+      {% if summary.unassigned_interfaces > 0 %}
+        Available for assignment
+      {% else %}
+        All interfaces assigned
+      {% endif %}
+    </div>
   </div>
 </div>

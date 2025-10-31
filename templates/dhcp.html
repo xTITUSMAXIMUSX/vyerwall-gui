@@ -1,382 +1,470 @@
 {% extends 'base.html' %}
-{% block title %}DHCP{% endblock %}
+{% block title %}DHCP Server{% endblock %}
 {% set active = 'services' %}
-{% block header %}DHCP Server{% endblock %}
-{% block content %}
-
-<div class="bg-gray-800 rounded-xl shadow flex overflow-hidden">
-  <!-- Sidebar with interfaces -->
-  <div class="w-64 bg-gray-900 border-r border-gray-700">
-    <h3 class="text-lg font-semibold p-4 border-b border-gray-700">Interfaces</h3>
-    <ul class="divide-y divide-gray-700">
-      {% for name, info in interfaces.items() %}
-      <li>
-        <button 
-          class="w-full text-left px-4 py-3 hover:bg-gray-700 flex items-center justify-between select-interface"
-          data-iface="{{ name }}"
-          data-description="{{ info.description or name }}">
-          <div class="flex items-center gap-2">
-            <span class="material-icons text-blue-400 text-sm">settings_ethernet</span>
-            {{ name }}
-          </div>
-          <span class="material-icons text-sm text-gray-400">chevron_right</span>
-        </button>
-      </li>
-      {% endfor %}
-    </ul>
+{% block header %}
+<div class="flex items-center gap-3">
+  <span class="material-icons text-blue-400 text-3xl">dns</span>
+  <div>
+    <div class="text-2xl font-bold">DHCP Server</div>
+    <div class="text-sm text-gray-400 font-normal">Configure DHCP scopes and manage IP address leasing</div>
   </div>
+</div>
+{% endblock %}
 
-<div class="flex-1 p-6 max-w-3xl">
-  <h2 class="text-xl font-bold mb-4" id="ifaceTitle">DHCP Server Configuration</h2>
+{% block content %}
+<div class="max-w-[1600px] mx-auto">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-  <form id="dhcpForm" class="space-y-4 bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-    <div class="flex items-center gap-2">
-      <input type="checkbox" id="enableDhcp" name="enabled"
-        class="h-4 w-4 text-blue-500 bg-gray-700 border border-gray-600 rounded">
-      <label for="enableDhcp" class="text-sm text-gray-300 select-none">Enable DHCP Server</label>
-    </div>
+    <!-- Left Sidebar - Interface Selection -->
+    <div class="lg:col-span-3">
+      <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden sticky top-0">
+        <div class="p-5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-b border-gray-700/50">
+          <h3 class="text-lg font-bold flex items-center gap-2">
+            <span class="material-icons text-blue-400">settings_ethernet</span>
+            Network Interfaces
+          </h3>
+          <p class="text-xs text-gray-400 mt-1">Select an interface to configure</p>
+        </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">Shared Network Name</label>
-        <input type="text" id="sharedNetwork" name="sharedNetwork" placeholder="LAN"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">Subnet</label>
-        <input type="text" id="subnet" name="subnet" placeholder="192.168.1.0/24" readonly
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">Default Router</label>
-        <input type="text" id="defaultRouter" name="defaultRouter" placeholder="192.168.1.1"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">Name Server</label>
-        <input type="text" id="nameServer" name="nameServer" placeholder="192.168.1.1"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">Domain Name</label>
-        <input type="text" id="domainName" name="domainName" placeholder="vyos.net"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">Lease Time (seconds)</label>
-        <input type="number" id="lease" name="lease" placeholder="86400" min="1" step="1" value="86400"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">Start Address</label>
-        <input type="text" id="startAddress" name="startAddress" placeholder="192.168.1.2"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-300 mb-1">End Address</label>
-        <input type="text" id="endAddress" name="endAddress" placeholder="192.168.1.254"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-          required>
+        <div class="max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar">
+          {% if interfaces %}
+            {% for name, info in interfaces.items() %}
+            <button
+              class="w-full text-left px-5 py-4 hover:bg-gray-700/50 transition-all duration-200 border-l-4 border-transparent hover:border-blue-500 group select-interface"
+              data-iface="{{ name }}"
+              data-description="{{ info.description or name }}">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <span class="material-icons text-white text-lg">{% if '.' in name %}lan{% else %}router{% endif %}</span>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-gray-100 group-hover:text-blue-400 transition-colors">{{ name }}</div>
+                    <div class="text-xs text-gray-500 mt-0.5">
+                      {% if info.description %}{{ info.description }}{% else %}No description{% endif %}
+                    </div>
+                  </div>
+                </div>
+                <span class="material-icons text-gray-600 group-hover:text-blue-400 transition-colors">chevron_right</span>
+              </div>
+              {% if info.address %}
+              <div class="mt-2 flex flex-wrap gap-1">
+                {% for addr in info.address[:2] %}
+                <span class="text-xs px-2 py-1 bg-gray-700/50 rounded-md text-gray-400 font-mono">{{ addr }}</span>
+                {% endfor %}
+                {% if info.address|length > 2 %}
+                <span class="text-xs px-2 py-1 bg-gray-700/50 rounded-md text-gray-500">+{{ info.address|length - 2 }}</span>
+                {% endif %}
+              </div>
+              {% endif %}
+            </button>
+            {% endfor %}
+          {% else %}
+            <div class="p-8 text-center text-gray-500">
+              <span class="material-icons text-5xl mb-3 opacity-50">settings_ethernet</span>
+              <p class="text-sm">No interfaces found</p>
+            </div>
+          {% endif %}
+        </div>
       </div>
     </div>
 
-    <div>
-      <label class="block text-sm text-gray-300 mb-1">Subnet ID</label>
-      <input type="text" id="subnetId" name="subnetId" value="{{ next_subnet_id }}" readonly
-        class="w-24 p-2 rounded bg-gray-700 text-gray-400 border border-gray-600 cursor-not-allowed"
-        required>
+    <!-- Main Content Area -->
+    <div class="lg:col-span-6">
+      <div id="dhcp-content-wrapper" class="relative">
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="hidden absolute inset-0 bg-gray-900/80 backdrop-blur-sm rounded-2xl z-50 flex items-center justify-center">
+          <div class="text-center">
+            <div class="inline-block p-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-3xl mb-4">
+              <span class="material-icons text-6xl text-blue-400 animate-spin">refresh</span>
+            </div>
+            <p class="text-lg font-semibold text-gray-200">Loading Configuration...</p>
+            <p class="text-sm text-gray-400 mt-2">Please wait</p>
+          </div>
+        </div>
+
+        <!-- Initial State -->
+        <div id="initial-state" class="text-center py-20">
+          <div class="inline-block p-6 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl mb-6">
+            <span class="material-icons text-7xl text-blue-400">dns</span>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-300 mb-3">Configure DHCP Server</h2>
+          <p class="text-gray-500 max-w-md mx-auto">
+            Select a network interface from the sidebar to view or configure its DHCP settings
+          </p>
+        </div>
+
+        <!-- Form Container (hidden initially) -->
+        <form id="dhcpForm" class="space-y-6 hidden" data-next-subnet-id="{{ next_subnet_id }}">
+
+          <!-- Interface Header -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700/50 p-6">
+            <div class="flex items-start justify-between">
+              <div>
+                <h2 class="text-2xl font-bold mb-2" id="ifaceTitle">DHCP Configuration</h2>
+                <div class="flex items-center gap-4 text-sm">
+                  <span class="flex items-center gap-1 text-gray-400">
+                    <span class="material-icons text-xs">network_check</span>
+                    <span id="interface-status">Ready to configure</span>
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer group">
+                  <input type="checkbox" id="enableDhcp" name="enabled" class="sr-only peer">
+                  <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                  <span class="ml-3 text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Enable DHCP</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden">
+            <div class="flex border-b border-gray-700/50 bg-gray-800/50">
+              <button type="button" data-dhcp-tab="scope"
+                class="flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 border-b-2 border-blue-500 text-blue-400 bg-blue-500/10">
+                <span class="material-icons text-sm align-middle mr-2">settings</span>
+                Scope Settings
+              </button>
+              <button type="button" data-dhcp-tab="global"
+                class="flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-700/30">
+                <span class="material-icons text-sm align-middle mr-2">public</span>
+                Global Settings
+              </button>
+            </div>
+
+            <!-- Scope Settings Panel -->
+            <div class="p-6 space-y-6" data-dhcp-panel="scope">
+
+              <!-- Network Configuration -->
+              <div class="space-y-4">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-1 h-6 bg-blue-500 rounded-full"></div>
+                  <h3 class="text-lg font-bold text-gray-200">Network Configuration</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">label</span>
+                      Shared Network Name
+                    </label>
+                    <input type="text" id="sharedNetwork" name="sharedNetwork" placeholder="LAN" readonly
+                      class="w-full px-4 py-3 rounded-xl bg-gray-800/50 text-gray-400 border border-gray-600 cursor-not-allowed"
+                      required>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">account_tree</span>
+                      Subnet (CIDR)
+                    </label>
+                    <input type="text" id="subnet" name="subnet" placeholder="192.168.1.0/24" readonly
+                      class="w-full px-4 py-3 rounded-xl bg-gray-800/50 text-gray-400 border border-gray-600 cursor-not-allowed"
+                      required>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">router</span>
+                      Default Router
+                    </label>
+                    <input type="text" id="defaultRouter" name="defaultRouter" placeholder="192.168.1.1"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+                      required>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">language</span>
+                      Domain Name
+                    </label>
+                    <input type="text" id="subnetDomainName" placeholder="vyos.net"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+                      required>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="sharedAuthoritative" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <span class="ml-3 text-sm font-medium text-gray-300">Authoritative Server</span>
+                  </label>
+                  <span class="material-icons text-xs text-gray-500 cursor-help" title="Send DHCPNAK to clients requesting addresses from other servers">help_outline</span>
+                </div>
+              </div>
+
+              <!-- DNS Configuration -->
+              <div class="space-y-4">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-1 h-6 bg-green-500 rounded-full"></div>
+                  <h3 class="text-lg font-bold text-gray-200">DNS Configuration</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">dns</span>
+                      DNS Servers
+                    </label>
+                    <textarea id="subnetNameServers" rows="3"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all resize-none font-mono text-sm"
+                      placeholder="10.50.50.1&#10;8.8.8.8" required></textarea>
+                    <p class="text-xs text-gray-500 mt-1.5">One IP address per line</p>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">search</span>
+                      Search Domains
+                    </label>
+                    <textarea id="subnetDomainSearch" rows="3"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all resize-none font-mono text-sm"
+                      placeholder="corp.local"></textarea>
+                    <p class="text-xs text-gray-500 mt-1.5">Optional search domains</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DHCP Pool Configuration -->
+              <div class="space-y-4">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-1 h-6 bg-purple-500 rounded-full"></div>
+                  <h3 class="text-lg font-bold text-gray-200">DHCP Pool Configuration</h3>
+                </div>
+
+                <div class="bg-purple-500/5 border border-purple-500/20 rounded-xl p-4">
+                  <label class="block text-sm font-medium text-gray-300 mb-3">
+                    <span class="material-icons text-xs align-middle mr-1">wifi_tethering</span>
+                    Dynamic Address Range
+                  </label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" id="startAddress" name="startAddress" placeholder="192.168.1.20"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"
+                      required>
+                    <input type="text" id="endAddress" name="endAddress" placeholder="192.168.1.200"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"
+                      required>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-2">IP range for dynamic DHCP assignments</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">schedule</span>
+                      Lease Duration (seconds)
+                    </label>
+                    <input type="number" id="lease" name="lease" placeholder="86400" min="1" step="1"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+                      required>
+                    <p class="text-xs text-gray-500 mt-1.5">Default: 86400 (24 hours)</p>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      <span class="material-icons text-xs align-middle mr-1">block</span>
+                      Exclude Addresses
+                    </label>
+                    <textarea id="subnetExcludeAddresses" rows="2"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all resize-none font-mono text-sm"
+                      placeholder="192.168.1.1"></textarea>
+                    <p class="text-xs text-gray-500 mt-1.5">One IP per line</p>
+                  </div>
+                </div>
+
+                <!-- Hidden subnet ID field for backend -->
+                <input type="hidden" id="subnetId" name="subnetId" value="{{ next_subnet_id }}">
+              </div>
+
+              <!-- Static Mappings -->
+              <div class="space-y-4" data-static-mappings>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <div class="w-1 h-6 bg-orange-500 rounded-full"></div>
+                    <h3 class="text-lg font-bold text-gray-200">Static IP Reservations</h3>
+                  </div>
+                  <button type="button"
+                    class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2"
+                    data-action="add-static-mapping">
+                    <span class="material-icons text-sm">add</span>
+                    Add Reservation
+                  </button>
+                </div>
+                <div class="space-y-3" data-static-list></div>
+                <div class="text-sm text-gray-500 text-center py-4 italic" data-empty-state>
+                  No static reservations configured. Click "Add Reservation" to create one.
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Global Settings Panel -->
+            <div class="p-6 space-y-6 hidden" data-dhcp-panel="global">
+
+              <!-- Global Options -->
+              <div class="space-y-4">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-1 h-6 bg-blue-500 rounded-full"></div>
+                  <h3 class="text-lg font-bold text-gray-200">Global DHCP Options</h3>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="globalHostfileUpdate" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <span class="ml-3 text-sm font-medium text-gray-300">Hostfile Update</span>
+                  </label>
+                  <span class="material-icons text-xs text-gray-500 cursor-help" title="Update /etc/hosts with DHCP leases">help_outline</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    <span class="material-icons text-xs align-middle mr-1">hearing</span>
+                    Listen Addresses
+                  </label>
+                  <textarea id="globalListenAddresses" rows="3"
+                    class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all resize-none font-mono text-sm"
+                    placeholder="192.168.1.1&#10;192.168.2.1"></textarea>
+                  <p class="text-xs text-gray-500 mt-1.5">One IP per line (leave empty for all interfaces)</p>
+                </div>
+              </div>
+
+              <!-- High Availability -->
+              <div class="space-y-4">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-1 h-6 bg-green-500 rounded-full"></div>
+                  <h3 class="text-lg font-bold text-gray-200">High Availability</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Mode</label>
+                    <select id="haMode"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all">
+                      <option value="">Not configured</option>
+                      <option value="active-active">Active-Active</option>
+                      <option value="active-passive">Active-Passive</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                    <select id="haStatus"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all">
+                      <option value="">Unset</option>
+                      <option value="primary">Primary</option>
+                      <option value="secondary">Secondary</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Source Address</label>
+                    <input type="text" id="haSource"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all"
+                      placeholder="192.0.2.10">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Remote Peer</label>
+                    <input type="text" id="haRemote"
+                      class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all"
+                      placeholder="192.0.2.11">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Peer Name</label>
+                  <input type="text" id="haName"
+                    class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all"
+                    placeholder="dhcp-secondary">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="flex justify-end">
+            <button type="submit" id="dhcpSaveButton"
+              class="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 font-semibold text-lg flex items-center gap-3 group">
+              <span class="material-icons animate-spin hidden" id="dhcpSaveSpinner">refresh</span>
+              <span id="dhcpSaveLabel">Save Configuration</span>
+              <span class="material-icons group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
     </div>
 
-    <div class="pt-4">
-      <button type="submit"
-        class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg shadow text-white font-medium transition-colors">
-        Save DHCP Configuration
-      </button>
+    <!-- Right Sidebar - Active Leases -->
+    <div class="lg:col-span-3">
+      <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700/50 sticky top-0">
+        <div class="p-5 bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-b border-gray-700/50">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold flex items-center gap-2">
+                <span class="material-icons text-green-400">receipt_long</span>
+                Active Leases
+              </h3>
+              <p class="text-xs text-gray-400 mt-1">Current DHCP assignments</p>
+            </div>
+            <button type="button" id="refreshLeases"
+              class="p-2 hover:bg-gray-700/50 rounded-lg transition-all group">
+              <span class="material-icons text-green-400 group-hover:rotate-180 transition-transform duration-500">refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="leasesContainer" class="p-5 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar">
+          <div class="text-center py-12 text-gray-500">
+            <span class="material-icons text-5xl mb-3 opacity-50">receipt</span>
+            <p class="text-sm">Select an interface to view leases</p>
+          </div>
+        </div>
+      </div>
     </div>
-  </form>
+
+  </div>
 </div>
 
-
-<script>
-const form = document.getElementById('dhcpForm');
-const fields = {
-  sharedNetwork: document.getElementById('sharedNetwork'),
-  subnet: document.getElementById('subnet'),
-  defaultRouter: document.getElementById('defaultRouter'),
-  nameServer: document.getElementById('nameServer'),
-  domainName: document.getElementById('domainName'),
-  lease: document.getElementById('lease'),
-  startAddress: document.getElementById('startAddress'),
-  endAddress: document.getElementById('endAddress'),
-  subnetId: document.getElementById('subnetId')
-};
-const enableCheckbox = document.getElementById('enableDhcp');
-fields.subnetId.dataset.defaultValue = fields.subnetId.value;
-
-let selectedInterface = null;
-let originalState = null;
-let interfaceDefaults = null;
-
-function normalizeNameServer(value) {
-  if (!value) {
-    return '';
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
   }
-  return value
-    .split(',')
-    .map(part => part.trim())
-    .filter(Boolean)
-    .join(', ');
-}
-
-function buildStateFromResponse(data, defaults) {
-  return {
-    sharedNetwork: (data.shared_network_name || defaults.sharedNetwork || '').trim(),
-    subnet: (data.subnet || '').trim(),
-    defaultRouter: (data.default_router || data.interface_ip || defaults.defaultRouter || '').trim(),
-    nameServer: normalizeNameServer(data.name_server || ''),
-    domainName: (data.domain_name || 'vyos.net').trim(),
-    lease: String(data.lease || 86400).trim(),
-    startAddress: (data.start || '').trim(),
-    endAddress: (data.end || '').trim(),
-    subnetId: data.subnet_id ? String(data.subnet_id).trim() : '',
-    enabled: Boolean(data.enabled),
-    isConfigured: Boolean(data.is_configured),
-    nextAvailableSubnetId: data.next_available_subnet_id ? String(data.next_available_subnet_id).trim() : ''
-  };
-}
-
-function applyStateToForm(state) {
-  if (state.nextAvailableSubnetId) {
-    fields.subnetId.dataset.defaultValue = state.nextAvailableSubnetId;
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(31, 41, 55, 0.5);
+    border-radius: 10px;
   }
-  fields.sharedNetwork.value = state.sharedNetwork;
-  fields.subnet.value = state.subnet;
-  fields.defaultRouter.value = state.defaultRouter;
-  fields.nameServer.value = normalizeNameServer(state.nameServer);
-  fields.domainName.value = state.domainName;
-  fields.lease.value = state.lease || '86400';
-  fields.startAddress.value = state.startAddress;
-  fields.endAddress.value = state.endAddress;
-  const defaultSubnetId = fields.subnetId.dataset.defaultValue || '';
-  fields.subnetId.value = state.subnetId || defaultSubnetId;
-  enableCheckbox.checked = Boolean(state.enabled);
-}
-
-function getFormValues() {
-  return {
-    sharedNetwork: fields.sharedNetwork.value.trim(),
-    subnet: fields.subnet.value.trim(),
-    defaultRouter: fields.defaultRouter.value.trim(),
-    nameServer: normalizeNameServer(fields.nameServer.value),
-    domainName: fields.domainName.value.trim(),
-    lease: fields.lease.value.trim(),
-    startAddress: fields.startAddress.value.trim(),
-    endAddress: fields.endAddress.value.trim(),
-    subnetId: fields.subnetId.value.trim(),
-    enabled: enableCheckbox.checked
-  };
-}
-
-async function fetchInterfaceDhcp(iface, description) {
-  document.getElementById('ifaceTitle').textContent = `DHCP Settings for ${iface}`;
-  const response = await fetch(`/services/dhcp/${iface}`);
-  if (!response.ok) {
-    throw new Error('Unable to load DHCP configuration.');
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.8);
+    border-radius: 10px;
   }
-  const data = await response.json();
-  interfaceDefaults = {
-    sharedNetwork: description || iface,
-    defaultRouter: data.interface_ip || ''
-  };
-  const state = buildStateFromResponse(data, interfaceDefaults);
-  applyStateToForm(state);
-  originalState = {
-    sharedNetwork: state.sharedNetwork,
-    subnet: state.subnet,
-    defaultRouter: state.defaultRouter,
-    nameServer: state.nameServer,
-    domainName: state.domainName,
-    lease: state.lease,
-    startAddress: state.startAddress,
-    endAddress: state.endAddress,
-    subnetId: state.subnetId,
-    enabled: state.enabled,
-    isConfigured: state.isConfigured
-  };
-  selectedInterface = iface;
-  document.getElementById('dhcpForm').classList.remove('hidden');
-}
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 1);
+  }
 
-document.querySelectorAll('.select-interface').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    try {
-      await fetchInterfaceDhcp(btn.dataset.iface, btn.dataset.description);
-    } catch (error) {
-      console.error(error);
-      alert(error.message || 'Failed to load DHCP configuration.');
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
     }
-  });
-});
-
-function ipToBigInt(ip) {
-  const parts = ip.split('.').map(part => Number(part));
-  if (parts.length !== 4 || parts.some(part => Number.isNaN(part) || part < 0 || part > 255)) {
-    return null;
-  }
-  return parts.reduce((total, part) => (total << 8n) + BigInt(part), 0n);
-}
-
-function parseCidr(cidr) {
-  const [address, prefixStr] = cidr.split('/');
-  const prefix = Number(prefixStr);
-  if (!address || Number.isNaN(prefix) || prefix < 0 || prefix > 32) {
-    return null;
-  }
-  const network = ipToBigInt(address);
-  if (network === null) {
-    return null;
-  }
-  const hostBits = 32 - prefix;
-  const mask = prefix === 0 ? 0n : (~((1n << BigInt(hostBits)) - 1n) & 0xffffffffn);
-  const start = network & mask;
-  const end = start | (~mask & 0xffffffffn);
-  return { start, end };
-}
-
-function validateAddressRange() {
-  const subnetValue = fields.subnet.value.trim();
-  const startValue = fields.startAddress.value.trim();
-  const endValue = fields.endAddress.value.trim();
-
-  const range = parseCidr(subnetValue);
-  if (!range) {
-    alert('Subnet must be a valid IPv4 network in CIDR notation.');
-    return false;
-  }
-
-  const startIp = ipToBigInt(startValue);
-  if (startIp === null) {
-    alert('Start address must be a valid IPv4 address.');
-    return false;
-  }
-
-  const endIp = ipToBigInt(endValue);
-  if (endIp === null) {
-    alert('End address must be a valid IPv4 address.');
-    return false;
-  }
-
-  if (startIp < range.start || startIp > range.end) {
-    alert('Start address must be within the selected subnet.');
-    return false;
-  }
-
-  if (endIp < range.start || endIp > range.end) {
-    alert('End address must be within the selected subnet.');
-    return false;
-  }
-
-  if (endIp < startIp) {
-    alert('End address must be greater than or equal to the start address.');
-    return false;
-  }
-
-  return true;
-}
-
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
-    if (typeof form.reportValidity === 'function') {
-      form.reportValidity();
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-    return;
   }
 
-  if (!validateAddressRange()) {
-    return;
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
   }
+</style>
 
-  if (!selectedInterface) {
-    alert('Please choose an interface first.');
-    return;
-  }
-
-  const currentValues = getFormValues();
-  const isConfigured = Boolean(originalState?.isConfigured);
-  const endpoint = isConfigured
-    ? `/services/dhcp/${selectedInterface}/update`
-    : `/services/dhcp/${selectedInterface}/create`;
-
-  const payload = isConfigured
-    ? { data: currentValues, original: originalState }
-    : { data: currentValues };
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    if (!response.ok || result.status !== 'ok') {
-      throw new Error(result.message || 'Failed to save DHCP configuration.');
-    }
-
-    const updatedData = result.data || {};
-    const defaults = {
-      sharedNetwork: interfaceDefaults?.sharedNetwork || currentValues.sharedNetwork,
-      defaultRouter: updatedData.interface_ip || interfaceDefaults?.defaultRouter || currentValues.defaultRouter
-    };
-    const updatedState = buildStateFromResponse(updatedData, defaults);
-    applyStateToForm(updatedState);
-    originalState = {
-      sharedNetwork: updatedState.sharedNetwork,
-      subnet: updatedState.subnet,
-      defaultRouter: updatedState.defaultRouter,
-      nameServer: updatedState.nameServer,
-      domainName: updatedState.domainName,
-      lease: updatedState.lease,
-      startAddress: updatedState.startAddress,
-      endAddress: updatedState.endAddress,
-      subnetId: updatedState.subnetId,
-      enabled: updatedState.enabled,
-      isConfigured: updatedState.isConfigured
-    };
-
-    interfaceDefaults = interfaceDefaults || {};
-    interfaceDefaults.sharedNetwork = updatedState.sharedNetwork || interfaceDefaults.sharedNetwork;
-    interfaceDefaults.defaultRouter = updatedState.defaultRouter || interfaceDefaults.defaultRouter;
-
-    alert('DHCP configuration saved.');
-  } catch (error) {
-    console.error(error);
-    alert(error.message || 'Failed to save DHCP configuration.');
-  }
-});
-</script>
-
-
+<script src="{{ url_for('static', filename='js/dhcp.js') }}" defer></script>
 {% endblock %}

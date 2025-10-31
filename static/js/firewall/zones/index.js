@@ -14,6 +14,7 @@ const els = {
   createSubmit: document.getElementById('zoneCreateSubmit'),
   createSpinner: document.getElementById('zoneCreateSpinner'),
   createLabel: document.getElementById('zoneCreateLabel'),
+  createIcon: document.getElementById('zoneCreateIcon'),
   openCreateBtn: document.getElementById('openCreateZone'),
 
   deleteModal: document.getElementById('zoneDeleteModal'),
@@ -21,6 +22,7 @@ const els = {
   deleteConfirm: document.getElementById('zoneDeleteConfirm'),
   deleteSpinner: document.getElementById('zoneDeleteSpinner'),
   deleteLabel: document.getElementById('zoneDeleteLabel'),
+  deleteIcon: document.getElementById('zoneDeleteIcon'),
 
   manageModal: document.getElementById('zoneManageModal'),
   manageZoneName: document.getElementById('manageZoneName'),
@@ -30,21 +32,59 @@ const els = {
   addMemberSubmit: document.getElementById('zoneAddMemberSubmit'),
   addMemberSpinner: document.getElementById('zoneAddMemberSpinner'),
   addMemberLabel: document.getElementById('zoneAddMemberLabel'),
+  addMemberIcon: document.getElementById('zoneAddMemberIcon'),
+
+  toastContainer: document.getElementById('toastContainer'),
 };
 
 let activeZone = null;
 
-function toggleButtonLoading(button, spinner, label, isLoading, idleText, busyText) {
+// Toast notification system
+function showToast(message, type = 'info') {
+  const colors = {
+    success: { bg: 'from-green-600 to-emerald-600', icon: 'check_circle', iconColor: 'text-green-300' },
+    error: { bg: 'from-red-600 to-red-700', icon: 'error', iconColor: 'text-red-300' },
+    info: { bg: 'from-blue-600 to-purple-600', icon: 'info', iconColor: 'text-blue-300' },
+    warning: { bg: 'from-orange-500 to-red-600', icon: 'warning', iconColor: 'text-orange-300' },
+  };
+
+  const config = colors[type] || colors.info;
+  const toast = document.createElement('div');
+  toast.className = `flex items-center gap-3 bg-gradient-to-r ${config.bg} text-white px-5 py-4 rounded-xl shadow-2xl border border-white/20 transform transition-all duration-300 opacity-0 translate-x-full min-w-[320px]`;
+  toast.innerHTML = `
+    <span class="material-icons ${config.iconColor}">${config.icon}</span>
+    <span class="flex-1 font-medium">${message}</span>
+    <button class="material-icons text-sm hover:scale-110 transition-transform opacity-70 hover:opacity-100" onclick="this.parentElement.remove()">close</button>
+  `;
+
+  if (els.toastContainer) {
+    els.toastContainer.appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(0)';
+    });
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 5000);
+  }
+}
+
+function toggleButtonLoading(button, spinner, icon, label, isLoading, idleText, busyText) {
   if (!button || !label) return;
   if (isLoading) {
     button.disabled = true;
-    button.classList.add('opacity-70', 'cursor-not-allowed', 'animate-pulse');
+    button.classList.add('opacity-70', 'cursor-not-allowed');
     if (spinner) spinner.classList.remove('hidden');
+    if (icon) icon.classList.add('hidden');
     label.textContent = busyText;
   } else {
     button.disabled = false;
-    button.classList.remove('opacity-70', 'cursor-not-allowed', 'animate-pulse');
+    button.classList.remove('opacity-70', 'cursor-not-allowed');
     if (spinner) spinner.classList.add('hidden');
+    if (icon) icon.classList.remove('hidden');
     label.textContent = idleText;
   }
 }
@@ -75,11 +115,11 @@ function handleCreateZone(event) {
     interface: form.get('interface')?.trim(),
   };
   if (!payload.zone || !payload.interface) {
-    alert('Zone name and interface are required.');
+    showToast('Zone name and interface are required', 'warning');
     return;
   }
 
-  toggleButtonLoading(els.createSubmit, els.createSpinner, els.createLabel, true, 'Create Zone', 'Creating...');
+  toggleButtonLoading(els.createSubmit, els.createSpinner, els.createIcon, els.createLabel, true, 'Create Zone', 'Creating...');
   fetch(api.create, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -90,14 +130,13 @@ function handleCreateZone(event) {
       if (res.status !== 'ok') {
         throw new Error(res.message || 'Failed to create zone');
       }
-      window.location.reload();
+      showToast(`Zone "${payload.zone}" created successfully!`, 'success');
+      setTimeout(() => window.location.reload(), 1000);
     })
     .catch((err) => {
       console.error(err);
-      alert(err.message || 'Failed to create zone.');
-    })
-    .finally(() => {
-      toggleButtonLoading(els.createSubmit, els.createSpinner, els.createLabel, false, 'Create Zone', 'Creating...');
+      showToast(err.message || 'Failed to create zone', 'error');
+      toggleButtonLoading(els.createSubmit, els.createSpinner, els.createIcon, els.createLabel, false, 'Create Zone', 'Creating...');
     });
 }
 
@@ -111,7 +150,7 @@ function openDeleteModal(zone) {
 
 function handleDeleteZone() {
   if (!activeZone) return;
-  toggleButtonLoading(els.deleteConfirm, els.deleteSpinner, els.deleteLabel, true, 'Delete', 'Deleting...');
+  toggleButtonLoading(els.deleteConfirm, els.deleteSpinner, els.deleteIcon, els.deleteLabel, true, 'Delete', 'Deleting...');
   fetch(api.delete, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -122,14 +161,13 @@ function handleDeleteZone() {
       if (res.status !== 'ok') {
         throw new Error(res.message || 'Failed to delete zone');
       }
-      window.location.reload();
+      showToast(`Zone "${activeZone}" deleted successfully`, 'success');
+      setTimeout(() => window.location.reload(), 1000);
     })
     .catch((err) => {
       console.error(err);
-      alert(err.message || 'Failed to delete zone.');
-    })
-    .finally(() => {
-      toggleButtonLoading(els.deleteConfirm, els.deleteSpinner, els.deleteLabel, false, 'Delete', 'Deleting...');
+      showToast(err.message || 'Failed to delete zone', 'error');
+      toggleButtonLoading(els.deleteConfirm, els.deleteSpinner, els.deleteIcon, els.deleteLabel, false, 'Delete', 'Deleting...');
     });
 }
 
@@ -137,15 +175,19 @@ function renderMemberBadges(zone, members) {
   if (!els.manageMembers) return;
   els.manageMembers.innerHTML = '';
   if (!members || !members.length) {
-    els.manageMembers.innerHTML = '<span class="text-xs text-gray-500 italic">No interfaces assigned</span>';
+    els.manageMembers.innerHTML = '<div class="flex items-center gap-2 text-xs text-gray-500 italic p-2"><span class="material-icons text-xs">info</span>No interfaces assigned</div>';
     return;
   }
   members.forEach((iface) => {
     const badge = document.createElement('button');
-    badge.className = 'inline-flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-red-600 text-xs rounded text-white zone-remove-member';
+    badge.className = 'group inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-red-600 hover:to-red-700 border border-gray-600 hover:border-red-500 text-xs rounded-lg text-white font-medium transition-all shadow hover:shadow-lg zone-remove-member';
     badge.dataset.interface = iface;
     badge.dataset.zone = zone;
-    badge.innerHTML = `<span class="material-icons text-xs">link_off</span>${iface}`;
+    badge.innerHTML = `
+      <span class="material-icons text-xs text-cyan-400 group-hover:text-white">settings_ethernet</span>
+      <span>${iface}</span>
+      <span class="material-icons text-xs opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-transform">close</span>
+    `;
     els.manageMembers.appendChild(badge);
   });
 }
@@ -183,10 +225,10 @@ function handleAddMember(event) {
   if (!activeZone) return;
   const iface = els.addMemberSelect?.value;
   if (!iface) {
-    alert('Select an interface to add.');
+    showToast('Select an interface to add', 'warning');
     return;
   }
-  toggleButtonLoading(els.addMemberSubmit, els.addMemberSpinner, els.addMemberLabel, true, 'Add Interface', 'Adding...');
+  toggleButtonLoading(els.addMemberSubmit, els.addMemberSpinner, els.addMemberIcon, els.addMemberLabel, true, 'Add Interface', 'Adding...');
   fetch(api.membership, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -197,14 +239,13 @@ function handleAddMember(event) {
       if (res.status !== 'ok') {
         throw new Error(res.message || 'Failed to add interface.');
       }
-      window.location.reload();
+      showToast(`Interface "${iface}" added to zone "${activeZone}"`, 'success');
+      setTimeout(() => window.location.reload(), 1000);
     })
     .catch((err) => {
       console.error(err);
-      alert(err.message || 'Failed to add interface to zone.');
-    })
-    .finally(() => {
-      toggleButtonLoading(els.addMemberSubmit, els.addMemberSpinner, els.addMemberLabel, false, 'Add Interface', 'Adding...');
+      showToast(err.message || 'Failed to add interface to zone', 'error');
+      toggleButtonLoading(els.addMemberSubmit, els.addMemberSpinner, els.addMemberIcon, els.addMemberLabel, false, 'Add Interface', 'Adding...');
     });
 }
 
@@ -214,6 +255,10 @@ function handleRemoveMember(event) {
   const zone = btn.dataset.zone;
   const iface = btn.dataset.interface;
   if (!zone || !iface) return;
+
+  // Add loading state to button
+  btn.disabled = true;
+  btn.classList.add('opacity-50', 'cursor-not-allowed');
 
   fetch(api.membership, {
     method: 'POST',
@@ -225,11 +270,14 @@ function handleRemoveMember(event) {
       if (res.status !== 'ok') {
         throw new Error(res.message || 'Failed to remove interface.');
       }
-      window.location.reload();
+      showToast(`Interface "${iface}" removed from zone "${zone}"`, 'success');
+      setTimeout(() => window.location.reload(), 1000);
     })
     .catch((err) => {
       console.error(err);
-      alert(err.message || 'Failed to remove interface from zone.');
+      showToast(err.message || 'Failed to remove interface from zone', 'error');
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
     });
 }
 

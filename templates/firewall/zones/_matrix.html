@@ -1,44 +1,69 @@
-<div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
-  <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-    <div>
-      <h3 class="text-lg font-semibold text-white">Zone Matrix</h3>
-      <p class="text-xs text-gray-400">Hover cells to view rule-set names. Click to manage firewall rules.</p>
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl overflow-hidden shadow-2xl">
+  <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-purple-900/20 to-pink-900/20">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-purple-400">grid_on</span>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+          Zone Matrix
+        </h3>
+        <p class="text-xs text-gray-400">Click cells to manage zone-pair firewall rules</p>
+      </div>
     </div>
   </div>
-  <div class="overflow-auto">
+  <div class="overflow-auto custom-scrollbar">
     <table class="min-w-full text-sm text-gray-200" id="zoneMatrixTable">
-      <thead class="bg-gray-800 text-gray-400 uppercase text-xs tracking-wider">
+      <thead class="bg-gradient-to-r from-gray-800 to-gray-900 text-gray-300 text-xs font-semibold tracking-wider sticky top-0 z-10">
         <tr>
-          <th class="px-4 py-3 text-left">Source \ Destination</th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-purple-400">arrow_forward</span>
+              Source / Destination
+            </div>
+          </th>
           {% for destination in zone_names %}
-          <th class="px-4 py-3 text-center">{{ zone_display_map.get(destination, destination) }}</th>
+          <th class="px-5 py-4 text-center border-b border-gray-700/50">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-700/30 rounded-lg">
+              <span class="material-icons text-xs text-purple-400">location_on</span>
+              <span>{{ zone_display_map.get(destination, destination) }}</span>
+            </div>
+          </th>
           {% endfor %}
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y divide-gray-800/50">
         {% for row in matrix %}
-        <tr class="border-t border-gray-800">
-          <td class="px-4 py-3 font-semibold text-white">{{ zone_display_map.get(row.source, row.source) }}</td>
+        <tr class="hover:bg-purple-500/5 transition-colors">
+          <td class="px-5 py-4 font-semibold text-white bg-gray-800/30">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-purple-400">location_on</span>
+              {{ zone_display_map.get(row.source, row.source) }}
+            </div>
+          </td>
           {% for cell in row.cells %}
-          <td class="px-4 py-3 text-center">
+          <td class="px-5 py-4 text-center">
             {% if cell.exists %}
-            <button class="zone-matrix-cell inline-flex items-center justify-center gap-2 px-3 py-2 rounded bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 text-xs"
+            <button class="zone-matrix-cell inline-flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 hover:from-blue-600/40 hover:to-purple-600/40 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 text-xs font-medium shadow-lg group"
                     data-firewall="{{ cell.firewall }}"
                     data-source="{{ cell.source }}"
                     data-destination="{{ cell.destination }}">
-              <span class="material-icons text-sm">shield</span>
-              {{ cell.firewall }}
-            </button>
-            {% if cell.type == 'self' %}
-            <div class="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Intra-zone</div>
-            {% endif %}
-            {% else %}
-            <div class="text-xs text-gray-500 italic">
+              <span class="material-icons text-base text-blue-400 group-hover:scale-110 transition-transform">shield</span>
+              <span class="font-mono">{{ cell.firewall }}</span>
               {% if cell.type == 'self' %}
-              No intra-zone rule
-              {% else %}
-              No rule set
+              <span class="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Intra-zone</span>
               {% endif %}
+            </button>
+            {% else %}
+            <div class="inline-flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700/50 text-gray-500">
+              <span class="material-icons text-base opacity-30">block</span>
+              <div class="text-[10px] italic">
+                {% if cell.type == 'self' %}
+                No intra-zone rule
+                {% else %}
+                No rule set
+                {% endif %}
+              </div>
             </div>
             {% endif %}
           </td>

@@ -1,12 +1,59 @@
 {% extends 'base.html' %}
 {% block title %}Firewall Zones{% endblock %}
-{% block header %}Firewall Zones{% endblock %}
 {% set active = 'firewall' %}
+{% set active_subnav = 'zones' %}
+
+{% block header %}
+<div class="flex items-center justify-between">
+  <div>
+    <div class="flex items-center gap-3 mb-2">
+      <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <span class="material-icons text-white text-2xl">dashboard_customize</span>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+          Firewall Zones
+        </h1>
+        <p class="text-gray-400 text-sm">Manage network zones and security boundaries</p>
+      </div>
+    </div>
+  </div>
+  <button id="openCreateZone" class="group inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+    <span class="material-icons group-hover:scale-110 transition-transform">add_circle</span>
+    Create Zone
+  </button>
+</div>
+{% endblock %}
 
 {% block content %}
 <style>
   #zoneMatrixTable tbody tr:hover {
-    background-color: rgba(59, 130, 246, 0.08);
+    background-color: rgba(139, 92, 246, 0.08);
+  }
+
+  .zone-matrix-cell {
+    transition: all 0.2s ease;
+  }
+
+  .zone-matrix-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+
+  /* Custom scrollbar for modals */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(31, 41, 55, 0.5);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.5);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.8);
   }
 </style>
 
@@ -24,6 +71,9 @@
 </div>
 
 {% include 'firewall/zones/_modals.html' %}
+
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
 
 <script>
   window.FIREWALL_ZONE_DATA = {{ {
