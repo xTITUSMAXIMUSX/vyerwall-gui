@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Interfaces{% endblock %}
+{% set active = 'interfaces' %}
+
+{% block header %}
+<div class="flex items-center gap-3 mb-2">
+  <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+    <span class="material-icons text-white text-2xl">settings_ethernet</span>
+  </div>
+  <div>
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text text-transparent">
+      Network Interfaces
+    </h1>
+    <p class="text-gray-400 text-sm">Manage physical and virtual network interfaces</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  {% include 'service/interfaces/_toolbar.html' %}
+  {% include 'service/interfaces/_table.html' %}
+</div>
+
+{% include 'service/interfaces/_modals.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/interfaces/index.js') }}"></script>
+{% endblock %}

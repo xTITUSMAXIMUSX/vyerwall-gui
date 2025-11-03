@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% set active = 'dashboard' %}
+
+{% block header %}
+<div class="flex items-center gap-3 mb-2">
+  <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+    <span class="material-icons text-white text-2xl">dashboard</span>
+  </div>
+  <div>
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+      System Dashboard
+    </h1>
+    <p class="text-gray-400 text-sm">Real-time monitoring and system overview</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- System Stats (Top Row - CPU, RAM, Storage) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <!-- CPU Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-orange-400">memory</span>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-lg font-bold text-white">CPU Usage</h2>
+        <p class="text-xs text-gray-400">Processor utilization</p>
+      </div>
+      <span id="cpu-percentage" class="text-2xl font-bold text-orange-400">--%</span>
+    </div>
+
+    <div class="w-full bg-gray-700/50 h-3 rounded-full overflow-hidden">
+      <div id="cpu-bar" class="h-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-500" style="width: 0%;"></div>
+    </div>
+
+    <div class="flex items-center gap-2 mt-3">
+      <span class="material-icons text-xs text-gray-500 animate-pulse">sync</span>
+      <p class="text-gray-500 text-xs">Auto-refresh every 3s</p>
+    </div>
+  </div>
+
+  <!-- RAM Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-green-400">storage</span>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-lg font-bold text-white">Memory</h2>
+        <p class="text-xs text-gray-400">RAM utilization</p>
+      </div>
+      <span id="memory-percentage" class="text-2xl font-bold text-green-400">
+        {% if memory_result.percent_used is not none %}{{ memory_result.percent_used }}%{% else %}--%{% endif %}
+      </span>
+    </div>
+
+    <div class="w-full bg-gray-700/50 h-3 rounded-full overflow-hidden">
+      <div id="memory-bar" class="h-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500"
+           style="width: {{ memory_result.percent_used if memory_result.percent_used is not none else 0 }}%;"></div>
+    </div>
+
+    <div class="flex justify-between text-xs text-gray-400 mt-3">
+      <span>Used: <span id="memory-used" class="text-green-300 font-semibold">{{ memory_result.used_memory }}</span></span>
+      <span>Free: <span id="memory-free" class="text-green-300 font-semibold">{{ memory_result.free_memory }}</span></span>
+    </div>
+  </div>
+
+  <!-- Storage Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-blue-400">dns</span>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-lg font-bold text-white">Storage</h2>
+        <p class="text-xs text-gray-400">Disk utilization</p>
+      </div>
+      <span id="storage-percentage" class="text-2xl font-bold text-blue-400">
+        {% if storage_result.percent_used is not none %}{{ storage_result.percent_used }}%{% else %}--%{% endif %}
+      </span>
+    </div>
+
+    <div class="w-full bg-gray-700/50 h-3 rounded-full overflow-hidden">
+      <div id="storage-bar" class="h-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-500"
+           style="width: {{ storage_result.percent_used if storage_result.percent_used is not none else 0 }}%;"></div>
+    </div>
+
+    <div class="flex justify-between text-xs text-gray-400 mt-3">
+      <span>Used: <span id="storage-used" class="text-blue-300 font-semibold">{{ storage_result.used }}</span></span>
+      <span>Avail: <span id="storage-available" class="text-blue-300 font-semibold">{{ storage_result.available }}</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Second Row - System Info & Quick Actions -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <!-- System Overview Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-indigo-400">info</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">System Overview</h2>
+        <p class="text-xs text-gray-400">Device information</p>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <div class="flex items-center justify-between py-2 border-b border-gray-700/50">
+        <span class="text-sm text-gray-400 flex items-center gap-2">
+          <span class="material-icons text-xs">computer</span>
+          Hostname
+        </span>
+        <span id="system-hostname" class="text-sm font-semibold text-white">{{ system_info.hostname }}</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-700/50">
+        <span class="text-sm text-gray-400 flex items-center gap-2">
+          <span class="material-icons text-xs">update</span>
+          Version
+        </span>
+        <span id="system-version" class="text-sm font-semibold text-white">{{ system_info.version }}</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-700/50">
+        <span class="text-sm text-gray-400 flex items-center gap-2">
+          <span class="material-icons text-xs">schedule</span>
+          Uptime
+        </span>
+        <span id="system-uptime" class="text-sm font-semibold text-green-400">{{ system_info.uptime }}</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-700/50">
+        <span class="text-sm text-gray-400 flex items-center gap-2">
+          <span class="material-icons text-xs">speed</span>
+          Load Avg
+        </span>
+        <span id="system-load" class="text-sm font-semibold text-yellow-400">{{ system_info.load_average }}</span>
+      </div>
+      <div class="flex items-center justify-between py-2">
+        <span class="text-sm text-gray-400 flex items-center gap-2">
+          <span class="material-icons text-xs">access_time</span>
+          Current Time
+        </span>
+        <span id="system-time" class="text-sm font-semibold text-blue-400">{{ system_info.current_time }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Running Services Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-green-400">build</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">Running Services</h2>
+        <p class="text-xs text-gray-400">Active system services</p>
+      </div>
+    </div>
+
+    <ul class="space-y-2">
+      {% if service_names %}
+        {% for service in service_names %}
+        <li class="flex items-center gap-2 px-3 py-2 bg-gray-700/30 rounded-lg">
+          <span class="material-icons text-green-400 text-sm animate-pulse">check_circle</span>
+          <span class="text-sm font-semibold text-gray-200">{{ service | upper }}</span>
+        </li>
+        {% endfor %}
+      {% else %}
+        <li class="text-sm text-gray-500 text-center py-4">No services running</li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <!-- Quick Actions Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-pink-500/20 to-red-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-pink-400">bolt</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">Quick Actions</h2>
+        <p class="text-xs text-gray-400">System management</p>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <button onclick="quickActionSaveConfig()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all text-sm font-medium flex items-center justify-center gap-2">
+        <span class="material-icons text-sm">save</span>
+        Save Configuration
+      </button>
+      <button onclick="quickActionReboot()" class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all text-sm font-medium flex items-center justify-center gap-2">
+        <span class="material-icons text-sm">restart_alt</span>
+        Reboot System
+      </button>
+      <a href="{{ url_for('interfaces.interfaces') }}" class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all text-sm font-medium flex items-center justify-center gap-2">
+        <span class="material-icons text-sm">settings_ethernet</span>
+        Manage Interfaces
+      </a>
+      <a href="{{ url_for('firewall_rules.overview') }}" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all text-sm font-medium flex items-center justify-center gap-2">
+        <span class="material-icons text-sm">security</span>
+        Firewall Rules
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Third Row - Firewall Activity & DHCP Leases -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <!-- Firewall Activity Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-purple-400">security</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">Firewall Activity</h2>
+        <p class="text-xs text-gray-400">Connection tracking</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="bg-gray-700/30 rounded-xl p-4 text-center">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <span class="material-icons text-2xl text-green-400 animate-pulse">link</span>
+        </div>
+        <div id="firewall-connections" class="text-3xl font-bold text-white mb-1">{{ firewall_activity.active_connections }}</div>
+        <div class="text-xs text-gray-400">Active Connections</div>
+      </div>
+      <div class="bg-gray-700/30 rounded-xl p-4 text-center">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <span class="material-icons text-2xl text-red-400">block</span>
+        </div>
+        <div id="firewall-blocks" class="text-3xl font-bold text-white mb-1">0</div>
+        <div class="text-xs text-gray-400">Blocked Today</div>
+      </div>
+    </div>
+
+    <div class="text-xs text-gray-500 text-center py-2">
+      <span class="material-icons text-xs">info</span>
+      Real-time connection tracking active
+    </div>
+  </div>
+
+  <!-- DHCP Leases Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-cyan-400">dns</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">DHCP Leases</h2>
+        <p class="text-xs text-gray-400">Active IP assignments</p>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <div class="bg-gray-700/30 rounded-xl p-4 text-center">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <span class="material-icons text-2xl text-blue-400">devices</span>
+        </div>
+        <div id="dhcp-active-count" class="text-3xl font-bold text-white mb-1">{{ dhcp_leases.active_count }}</div>
+        <div class="text-xs text-gray-400">Active Leases</div>
+      </div>
+    </div>
+
+    {% if dhcp_leases.recent %}
+    <div class="space-y-2">
+      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Recent Leases</h3>
+      {% for lease in dhcp_leases.recent[:5] %}
+      <div class="flex items-center gap-2 px-3 py-2 bg-gray-700/30 rounded-lg text-xs">
+        <span class="material-icons text-xs text-blue-400">computer</span>
+        <span class="font-mono text-cyan-300">{{ lease.ip }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-xs text-gray-500 text-center py-4">No active leases</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Fourth Row - Network Traffic & Network Interfaces -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <!-- Network Traffic Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-yellow-400">swap_horiz</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">Network Traffic</h2>
+        <p class="text-xs text-gray-400">Interface statistics</p>
+      </div>
+    </div>
+
+    <div id="network-traffic-container" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+      {% for iface in network_traffic %}
+      <div class="bg-gray-700/30 rounded-lg p-3">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-icons text-sm text-cyan-400">settings_ethernet</span>
+          <span class="font-semibold text-white">{{ iface.name }}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="flex items-center gap-1">
+            <span class="material-icons text-xs text-green-400">arrow_downward</span>
+            <span class="text-gray-400">RX:</span>
+            <span class="text-green-300 font-mono">{{ iface.rx_bytes }}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="material-icons text-xs text-blue-400">arrow_upward</span>
+            <span class="text-gray-400">TX:</span>
+            <span class="text-blue-300 font-mono">{{ iface.tx_bytes }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Network Interfaces Card -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-blue-400">settings_ethernet</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">Network Interfaces</h2>
+        <p class="text-xs text-gray-400">Configured interfaces</p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto max-h-64 overflow-y-auto custom-scrollbar">
+      <table class="w-full text-left text-sm">
+        <thead class="text-xs text-gray-400 uppercase border-b border-gray-700">
+          <tr>
+            <th class="py-2 px-2">Interface</th>
+            <th class="py-2 px-2">Address</th>
+            <th class="py-2 px-2">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for name, info in interfaces.items() %}
+          <tr class="border-b border-gray-700/30 hover:bg-gray-700/20">
+            <td class="py-2 px-2">
+              <div class="flex items-center gap-2">
+                <span class="material-icons text-xs text-cyan-400">lan</span>
+                <span class="font-mono text-white">{{ name }}</span>
+              </div>
+            </td>
+            <td class="py-2 px-2">
+              {% if info.address %}
+              <span class="font-mono text-blue-300 text-xs">{{ info.address[0] }}</span>
+              {% else %}
+              <span class="text-gray-500 text-xs">N/A</span>
+              {% endif %}
+            </td>
+            <td class="py-2 px-2 text-gray-400 text-xs">{{ info.description or "N/A" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Fifth Row - Recent Logs -->
+<div class="grid grid-cols-1 gap-6 mb-6">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-indigo-400">article</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">Recent System Logs</h2>
+        <p class="text-xs text-gray-400">Latest system events</p>
+      </div>
+    </div>
+
+    <div id="recent-logs-container" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+      {% if recent_logs %}
+        {% for log in recent_logs %}
+        <div class="flex items-start gap-3 px-3 py-2 bg-gray-700/30 rounded-lg">
+          {% if log.severity == 'error' %}
+          <span class="material-icons text-sm text-red-400 mt-0.5">error</span>
+          {% elif log.severity == 'warning' %}
+          <span class="material-icons text-sm text-yellow-400 mt-0.5">warning</span>
+          {% else %}
+          <span class="material-icons text-sm text-blue-400 mt-0.5">info</span>
+          {% endif %}
+          <span class="text-xs text-gray-300 font-mono flex-1">{{ log.message }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-sm text-gray-500 text-center py-4">No recent logs available</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Reboot Confirmation Modal -->
+<div id="rebootModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+    <!-- Modal Header -->
+    <div class="flex items-center gap-3 p-6 border-b border-gray-700/50">
+      <div class="w-12 h-12 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-orange-400 text-2xl">warning</span>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-white">Confirm System Reboot</h3>
+        <p class="text-sm text-gray-400">This action will restart the system</p>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <p class="text-gray-300 mb-4">
+        Are you sure you want to reboot the system? This will:
+      </p>
+      <ul class="space-y-2 mb-4">
+        <li class="flex items-start gap-2 text-gray-400">
+          <span class="material-icons text-orange-400 text-sm mt-0.5">warning</span>
+          <span class="text-sm">Disconnect all active users</span>
+        </li>
+        <li class="flex items-start gap-2 text-gray-400">
+          <span class="material-icons text-orange-400 text-sm mt-0.5">warning</span>
+          <span class="text-sm">Temporarily interrupt network services</span>
+        </li>
+        <li class="flex items-start gap-2 text-gray-400">
+          <span class="material-icons text-orange-400 text-sm mt-0.5">warning</span>
+          <span class="text-sm">Drop all active connections</span>
+        </li>
+      </ul>
+      <p class="text-sm text-gray-500 bg-gray-700/30 rounded-lg p-3">
+        <span class="material-icons text-xs align-middle">info</span>
+        The system will be back online in approximately 1-2 minutes.
+      </p>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex gap-3 p-6 border-t border-gray-700/50">
+      <button onclick="closeRebootModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2">
+        <span class="material-icons text-sm">close</span>
+        Cancel
+      </button>
+      <button onclick="confirmReboot()" class="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-4 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+        <span class="material-icons text-sm">restart_alt</span>
+        <span id="rebootButtonText">Reboot Now</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-update functions
+async function updateCPU() {
+  try {
+    const response = await fetch('/get-cpu-usage');
+    const data = await response.json();
+    const cpu = data.cpu_total;
+
+    const cpuText = document.getElementById('cpu-percentage');
+    const cpuBar = document.getElementById('cpu-bar');
+
+    cpuText.textContent = `${cpu}%`;
+    cpuBar.style.width = `${cpu}%`;
+
+    // Dynamic color
+    if (cpu < 50) {
+      cpuBar.className = "h-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500";
+    } else if (cpu < 80) {
+      cpuBar.className = "h-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full transition-all duration-500";
+    } else {
+      cpuBar.className = "h-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-500";
+    }
+  } catch (err) {
+    console.error("Error updating CPU:", err);
+  }
+}
+
+async function updateMemory() {
+  try {
+    const response = await fetch('/get-memory-usage');
+    const data = await response.json();
+
+    const percent = data.percent_used;
+    document.getElementById('memory-percentage').textContent = percent !== null ? `${percent}%` : '--%';
+    document.getElementById('memory-bar').style.width = `${percent || 0}%`;
+    document.getElementById('memory-used').textContent = data.used_memory || 'N/A';
+    document.getElementById('memory-free').textContent = data.free_memory || 'N/A';
+  } catch (err) {
+    console.error("Error updating memory:", err);
+  }
+}
+
+async function updateStorage() {
+  try {
+    const response = await fetch('/get-storage-usage');
+    const data = await response.json();
+
+    const percent = data.percent_used;
+    document.getElementById('storage-percentage').textContent = percent !== null ? `${percent}%` : '--%';
+    document.getElementById('storage-bar').style.width = `${percent || 0}%`;
+    document.getElementById('storage-used').textContent = data.used || 'N/A';
+    document.getElementById('storage-available').textContent = data.available || 'N/A';
+  } catch (err) {
+    console.error("Error updating storage:", err);
+  }
+}
+
+async function updateSystemInfo() {
+  try {
+    const response = await fetch('/api/system-info');
+    const data = await response.json();
+
+    document.getElementById('system-hostname').textContent = data.hostname;
+    document.getElementById('system-version').textContent = data.version;
+    document.getElementById('system-uptime').textContent = data.uptime;
+    document.getElementById('system-load').textContent = data.load_average;
+    document.getElementById('system-time').textContent = data.current_time;
+  } catch (err) {
+    console.error("Error updating system info:", err);
+  }
+}
+
+async function updateFirewallActivity() {
+  try {
+    const response = await fetch('/api/firewall-activity');
+    const data = await response.json();
+
+    document.getElementById('firewall-connections').textContent = data.active_connections;
+  } catch (err) {
+    console.error("Error updating firewall activity:", err);
+  }
+}
+
+async function updateDHCPLeases() {
+  try {
+    const response = await fetch('/api/dhcp-leases');
+    const data = await response.json();
+
+    document.getElementById('dhcp-active-count').textContent = data.active_count;
+  } catch (err) {
+    console.error("Error updating DHCP leases:", err);
+  }
+}
+
+// Quick Actions
+async function quickActionSaveConfig() {
+  if (window.ConfigManager && window.ConfigManager.saveConfiguration) {
+    await window.ConfigManager.saveConfiguration();
+  } else {
+    alert('Configuration save function not available');
+  }
+}
+
+// Show reboot modal
+function quickActionReboot() {
+  const modal = document.getElementById('rebootModal');
+  modal.classList.remove('hidden');
+  // Add animation
+  setTimeout(() => {
+    modal.querySelector('div').classList.add('scale-100');
+  }, 10);
+}
+
+// Close reboot modal
+function closeRebootModal() {
+  const modal = document.getElementById('rebootModal');
+  modal.querySelector('div').classList.remove('scale-100');
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 200);
+}
+
+// Confirm and execute reboot
+async function confirmReboot() {
+  const button = document.querySelector('#rebootModal button[onclick="confirmReboot()"]');
+  const buttonText = document.getElementById('rebootButtonText');
+  const originalText = buttonText.textContent;
+
+  try {
+    // Disable button and show loading state
+    button.disabled = true;
+    button.classList.add('opacity-70', 'cursor-not-allowed');
+    buttonText.textContent = 'Rebooting...';
+
+    const response = await fetch('/api/quick-action/reboot', { method: 'POST' });
+    const data = await response.json();
+
+    if (data.status === 'ok') {
+      closeRebootModal();
+      if (window.ConfigManager && window.ConfigManager.showToast) {
+        window.ConfigManager.showToast('System reboot initiated - Device will be offline for 1-2 minutes', 'warning');
+      } else {
+        alert('System reboot initiated');
+      }
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (err) {
+    if (window.ConfigManager && window.ConfigManager.showToast) {
+      window.ConfigManager.showToast(err.message || 'Failed to reboot system', 'error');
+    } else {
+      alert(err.message || 'Failed to reboot system');
+    }
+  } finally {
+    // Reset button state
+    button.disabled = false;
+    button.classList.remove('opacity-70', 'cursor-not-allowed');
+    buttonText.textContent = originalText;
+  }
+}
+
+// Initial load
+updateCPU();
+updateMemory();
+updateStorage();
+updateSystemInfo();
+updateFirewallActivity();
+updateDHCPLeases();
+
+// Auto-refresh every 3 seconds
+setInterval(() => {
+  updateCPU();
+  updateMemory();
+  updateStorage();
+  updateSystemInfo();
+  updateFirewallActivity();
+  updateDHCPLeases();
+}, 3000);
+</script>
+
+{% endblock %}

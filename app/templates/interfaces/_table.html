@@ -1,0 +1,191 @@
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+  <div class="overflow-x-auto max-h-[36rem]">
+    <table class="min-w-full text-sm text-gray-200">
+      <thead class="bg-gradient-to-r from-gray-800 to-gray-900 text-gray-300 text-xs font-semibold tracking-wider sticky top-0 z-10">
+        <tr>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">label</span>
+              <span>Name</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">power</span>
+              <span>Status</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">settings</span>
+              <span>Mode</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">public</span>
+              <span>Address</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">download</span>
+              <span>In</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">upload</span>
+              <span>Out</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-left border-b border-gray-700/50">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-xs text-blue-400">error_outline</span>
+              <span>Error</span>
+            </div>
+          </th>
+          <th class="px-5 py-4 text-right border-b border-gray-700/50">
+            <div class="flex items-center justify-end gap-2">
+              <span class="material-icons text-xs text-blue-400">build</span>
+              <span>Actions</span>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800/50">
+        {% for name, info in interfaces.items() %}
+        <tr class="hover:bg-gradient-to-r hover:from-blue-900/10 hover:to-cyan-900/10 transition-all">
+          <td class="px-5 py-4 font-semibold">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center">
+                <span class="material-icons text-blue-400 text-base">settings_ethernet</span>
+              </div>
+              <div class="flex flex-col leading-tight">
+                <span class="text-white font-bold">{{ name }}</span>
+                {% if info.description %}
+                <span class="text-xs font-normal text-gray-400 mt-0.5">{{ info.description }}</span>
+                {% endif %}
+                <span class="text-xs uppercase tracking-wide font-medium mt-1 iface-zone">
+                  {% if info.zone %}
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-400/30 rounded-md text-indigo-300">
+                    <span class="material-icons text-xs">shield</span>
+                    {{ info.zone }}
+                  </span>
+                  {% else %}
+                  <span class="text-gray-500 italic text-xs">Unassigned</span>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </td>
+          <td class="px-5 py-4 iface-status">
+            {% if info.state == "UP" %}
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-green-400 text-sm">check_circle</span>
+              <span class="text-green-300 font-medium">Active</span>
+            </div>
+            {% else %}
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-red-500 text-sm">cancel</span>
+              <span class="text-red-400 font-medium">Down</span>
+            </div>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4 iface-mode">
+            {% if info.address_mode == "dhcp" %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-400/30 rounded-lg text-blue-300 text-xs font-semibold uppercase tracking-wide">
+              <span class="material-icons text-xs">autorenew</span>
+              DHCP
+            </span>
+            {% elif info.address_mode == "static" %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-lg text-purple-300 text-xs font-semibold uppercase tracking-wide">
+              <span class="material-icons text-xs">push_pin</span>
+              Static
+            </span>
+            {% else %}
+            <span class="text-gray-500 italic">N/A</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4 iface-address">
+            {% if info.inet %}
+            <span class="font-mono text-cyan-300">{{ info.inet[0] }}</span>
+            {% else %}
+            <span class="text-gray-500 italic">N/A</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4">
+            <span class="font-mono text-gray-300">{{ info.rx.bytes or "0" }}</span>
+          </td>
+          <td class="px-5 py-4">
+            <span class="font-mono text-gray-300">{{ info.tx.bytes or "0" }}</span>
+          </td>
+          <td class="px-5 py-4">
+            {% set rx_err = info.rx.errors|default("0")|int %}
+            {% set tx_err = info.tx.errors|default("0")|int %}
+            {% set total_err = rx_err + tx_err %}
+            {% if total_err > 0 %}
+            <div class="flex items-center gap-1.5 text-red-400 font-semibold">
+              <span class="material-icons text-sm">warning</span>
+              <span>{{ total_err }}</span>
+            </div>
+            {% else %}
+            <span class="text-gray-500">0</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-4">
+            <div class="flex justify-end gap-3">
+              <button
+                class="text-blue-400 hover:text-blue-300 transition-colors edit-btn p-1"
+                data-iface="{{ name }}"
+                data-description="{{ info.description or '' }}"
+                data-address="{{ info.config_address or (info.inet[0] if info.inet else '') }}"
+                data-mode="{{ info.address_mode or '' }}"
+                data-nat-interface="{{ info.source_nat_interface or '' }}"
+                data-nat-rule="{{ info.nat_rule_number or '' }}"
+                data-zone="{{ info.zone or '' }}"
+                title="Edit Interface"
+              >
+                <span class="material-icons text-base">edit</span>
+              </button>
+              {% if info.zone %}
+              <button
+                class="text-yellow-400 hover:text-yellow-300 transition-colors unassign-zone-btn p-1"
+                data-iface="{{ name }}"
+                data-zone="{{ info.zone }}"
+                data-description="{{ info.description or '' }}"
+                data-address="{{ info.config_address or (info.inet[0] if info.inet else '') }}"
+                data-mode="{{ info.address_mode or '' }}"
+                data-nat-interface="{{ info.source_nat_interface or '' }}"
+                data-nat-rule="{{ info.nat_rule_number or '' }}"
+                title="Remove from Zone"
+              >
+                <span class="material-icons text-base">link_off</span>
+              </button>
+              {% endif %}
+              <button
+                class="text-orange-400 hover:text-orange-300 transition-colors power-btn p-1"
+                data-iface="{{ name }}"
+                data-state="{{ info.state }}"
+                title="Toggle Enable/Disable"
+              >
+                <span class="material-icons text-base">power_settings_new</span>
+              </button>
+              <button
+                class="text-red-400 hover:text-red-300 transition-colors delete-btn p-1"
+                data-iface="{{ name }}"
+                data-zone="{{ info.zone or '' }}"
+                data-address="{{ info.config_address or (info.inet[0] if info.inet else '') }}"
+                data-description="{{ info.description or '' }}"
+                title="Delete Interface"
+              >
+                <span class="material-icons text-base">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

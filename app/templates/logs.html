@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}System Logs - VyerWall GUI{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl p-6 border border-gray-700/50">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+                <span class="material-icons text-blue-400 text-2xl">description</span>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-white">System Logs</h1>
+                <p class="text-gray-400 text-sm">Last 10 system log entries</p>
+            </div>
+        </div>
+
+        <div class="bg-black/30 rounded-xl p-4 border border-gray-700/50">
+            <div class="font-mono text-sm">
+                {% if logs %}
+                    {% for log in logs %}
+                        <div class="text-gray-300 py-1 border-b border-gray-800/50 last:border-0 hover:bg-gray-800/30 px-2 rounded">
+                            {{ log }}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-gray-500 text-center py-8">
+                        No logs available
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

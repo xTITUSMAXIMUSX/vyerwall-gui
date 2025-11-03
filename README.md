@@ -69,14 +69,20 @@ PASSWORD="supersecret"
 If you prefer runtime export instead of a `.env` file, set these variables in your shell before starting the app.
 
 ## Project Structure
-- `main.py` — Flask app factory, blueprint registration, and VyOS device initialisation.
-- `dashboard/` — Routes and helpers for system statistics and dashboard AJAX endpoints.
-- `interfaces/` — Interface management blueprints (VLANs, NAT, zones, DHCP helpers).
-- `firewall/` — Firewall rule views and utilities.
-- `dhcp/` — DHCP service pages.
-- `logs/` — Log viewing utilities.
-- `templates/` — Jinja2 templates, including dashboard and interface partials.
-- `static/js/` — Front-end scripts supporting interactive components.
+The project follows a modular architecture for better organization and maintainability:
+
+- `main.py` — Application entry point, blueprint registration, and VyOS device initialization
+- `app/` — Main application package containing all modules
+  - `auth/` — Authentication and session management
+  - `core/` — Core functionality (config state tracking)
+  - `modules/` — Feature modules (dashboard, interfaces, DHCP, NAT, firewall, logs)
+  - `lib/` — Third-party integrations (pyvyos API client)
+  - `static/` — CSS, JavaScript, and other static assets
+  - `templates/` — Jinja2 HTML templates
+- `tests/` — Test suite and debug scripts
+- `docs/` — Project documentation
+
+For detailed information about the project structure and development guidelines, see [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md).
 
 ## Development Tips
 - The `/get-*-usage` endpoints are polled from the dashboard every 3 seconds; ensure your VyOS device can respond within that interval.

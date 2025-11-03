@@ -1,0 +1,633 @@
+<!-- Edit Interface Modal -->
+<div id="editModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-xl border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-blue-400">edit</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Edit Interface</h3>
+          <p class="text-xs text-gray-400">Modify interface configuration</p>
+        </div>
+      </div>
+      <button id="cancelEdit" class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <form id="editForm" class="p-6 space-y-4">
+      <input type="hidden" id="editIface" name="iface" />
+      <input type="hidden" id="editNatRuleNumber" name="nat_rule_number" />
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">description</span>
+          Description
+        </label>
+        <input
+          type="text"
+          id="editDescription"
+          name="description"
+          placeholder="Interface description"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500"
+        />
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">shield</span>
+          Zone
+        </label>
+        <select
+          id="editZone"
+          name="zone"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+        >
+          <option value="">Select zone...</option>
+          {% for zone in zones %}
+          <option value="{{ zone }}">{{ zone }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">settings</span>
+          Address Mode
+        </label>
+        <select
+          id="editMode"
+          name="mode"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+        >
+          <option value="dhcp">DHCP</option>
+          <option value="static">Static</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">public</span>
+          Address
+        </label>
+        <input
+          type="text"
+          id="editAddress"
+          name="address"
+          placeholder="192.168.9.1/24"
+          pattern="^(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}$"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500"
+        />
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">swap_horiz</span>
+          Source NAT Outbound Interface
+        </label>
+        <select
+          id="editNatInterface"
+          name="source_nat_interface"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+        >
+          <option value="">No Source NAT</option>
+          {% for nat_iface in source_nat_interfaces %}
+          <option value="{{ nat_iface }}">{{ nat_iface }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3 pt-4 border-t border-gray-700/50">
+        <button type="button" id="cancelEditBtn" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-all">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2"
+        >
+          <span class="material-icons animate-spin text-sm hidden" id="editSpinner">refresh</span>
+          <span id="editSubmitLabel">Save Changes</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Interface Modal -->
+<div id="addInterfaceModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-xl border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-blue-400">add_circle</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Add Interface</h3>
+          <p class="text-xs text-gray-400">Configure a new network interface</p>
+        </div>
+      </div>
+      <button id="cancelAddInterface" class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <form id="addInterfaceForm" class="p-6 space-y-4">
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">settings_ethernet</span>
+          Interface
+        </label>
+        <select
+          id="addInterfaceSelect"
+          name="interface"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+          {% if not available_interfaces %}disabled{% endif %}
+        >
+          <option value="">Select interface...</option>
+          {% for iface in available_interfaces %}
+          <option value="{{ iface }}">{{ iface }}</option>
+          {% endfor %}
+        </select>
+        {% if not available_interfaces %}
+        <p class="text-sm text-amber-400 mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">info</span>
+          All ethernet interfaces are currently in use.
+        </p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">description</span>
+          Description
+        </label>
+        <input
+          type="text"
+          id="addInterfaceDescription"
+          name="description"
+          placeholder="Interface description"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500"
+        />
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">shield</span>
+          Zone (optional)
+        </label>
+        <select
+          id="addInterfaceZone"
+          name="zone"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+          data-require-selection="false"
+          {% if not zones %}disabled{% endif %}
+        >
+          <option value="">No zone assignment</option>
+          {% for zone in zones %}
+          <option value="{{ zone }}">{{ zone }}</option>
+          {% endfor %}
+        </select>
+        {% if not zones %}
+        <p class="text-sm text-amber-400 mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">warning</span>
+          No firewall zones available. Please configure zones first.
+        </p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">settings</span>
+          Address Mode
+        </label>
+        <select
+          id="addInterfaceMode"
+          name="mode"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+        >
+          <option value="dhcp">DHCP</option>
+          <option value="static" selected>Static</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">public</span>
+          Address (CIDR)
+        </label>
+        <input
+          type="text"
+          id="addInterfaceAddress"
+          name="address"
+          placeholder="192.168.9.1/24"
+          pattern="^(?:\d{1,3}\.){3}\d{1,3}\/\d{1,2}$"
+          title="Enter an IPv4 address in CIDR format, e.g. 192.168.9.1/24"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all placeholder-gray-500"
+        />
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-blue-400">swap_horiz</span>
+          Source NAT Outbound Interface
+        </label>
+        <select
+          id="addInterfaceNat"
+          name="source_nat_interface"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+        >
+          <option value="">No Source NAT</option>
+          {% for nat_iface in source_nat_interfaces %}
+          <option value="{{ nat_iface }}">{{ nat_iface }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3 pt-4 border-t border-gray-700/50">
+        <button type="button" id="cancelAddInterfaceBtn" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-all">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          id="submitAddInterface"
+          class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2"
+          {% if not available_interfaces %}disabled{% endif %}
+        >
+          <span class="material-icons animate-spin text-sm hidden" id="addInterfaceSpinner">refresh</span>
+          <span id="addInterfaceSubmitLabel">Create</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Create VLAN Modal -->
+<div id="createModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-xl border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-purple-900/20 to-pink-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-purple-400">playlist_add</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Create VLAN</h3>
+          <p class="text-xs text-gray-400">Add a new virtual network interface</p>
+        </div>
+      </div>
+      <button id="cancelCreate" class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <form id="createForm" class="p-6 space-y-4">
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">settings_ethernet</span>
+          Parent Interface
+        </label>
+        <select
+          id="vlanParent"
+          name="parent"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"
+        >
+          <option value="">Select parent interface...</option>
+          {% for name, info in interfaces.items() %}
+            {% if '.' not in name and '@' not in name %}
+            <option value="{{ name }}">{{ name }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">tag</span>
+          VLAN ID
+        </label>
+        <input
+          type="number"
+          id="vlanId"
+          name="vlan_id"
+          min="1"
+          max="4094"
+          placeholder="e.g. 5"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all placeholder-gray-500"
+        />
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">description</span>
+          Description
+        </label>
+        <input
+          type="text"
+          id="vlanDescription"
+          name="description"
+          placeholder="VLAN description"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all placeholder-gray-500"
+        />
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">shield</span>
+          Zone
+        </label>
+        <select
+          id="vlanZone"
+          name="zone"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"
+          {% if not zones %}disabled{% endif %}
+        >
+          <option value="">Select zone...</option>
+          {% for zone in zones %}
+          <option value="{{ zone }}">{{ zone }}</option>
+          {% endfor %}
+        </select>
+        {% if not zones %}
+        <p class="text-sm text-amber-400 mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">warning</span>
+          No firewall zones available. Please configure zones first.
+        </p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">settings</span>
+          Address Mode
+        </label>
+        <select
+          id="vlanMode"
+          name="mode"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"
+        >
+          <option value="dhcp">DHCP</option>
+          <option value="static" selected>Static</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">public</span>
+          Address
+        </label>
+        <input
+          type="text"
+          id="vlanAddress"
+          name="address"
+          placeholder="10.69.69.1/24"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all placeholder-gray-500"
+        />
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+          <span class="material-icons text-xs text-purple-400">swap_horiz</span>
+          Source NAT Outbound Interface
+        </label>
+        <select
+          id="vlanNatInterface"
+          name="source_nat_interface"
+          class="w-full px-4 py-3 rounded-xl bg-gray-700/50 text-white border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all"
+        >
+          <option value="">No Source NAT</option>
+          {% for nat_iface in source_nat_interfaces %}
+          <option value="{{ nat_iface }}">{{ nat_iface }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3 pt-4 border-t border-gray-700/50">
+        <button type="button" id="cancelCreateBtn" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-all">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          id="createVlanSubmit"
+          class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2"
+        >
+          <span class="material-icons animate-spin text-sm hidden" id="createVlanSpinner">refresh</span>
+          <span id="createVlanSubmitLabel">Create</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Interface Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-red-900/20 to-red-800/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-red-400">delete</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Delete Interface</h3>
+          <p class="text-xs text-gray-400">Remove interface configuration</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-delete-close="true">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <p class="text-gray-300 mb-4" id="deleteMessage">
+        Are you sure you want to delete <span id="deleteIfaceName" class="font-bold text-red-400">--</span>?
+      </p>
+      <div class="bg-gray-900/50 border border-gray-700/50 rounded-xl p-4 text-sm text-gray-200 mb-4 space-y-2">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Interface</span>
+          <span class="font-semibold" id="deleteInterfaceValue">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Zone</span>
+          <span class="font-semibold" id="deleteZoneValue">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Address</span>
+          <span class="font-semibold" id="deleteAddressValue">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Description</span>
+          <span class="font-semibold" id="deleteDescriptionValue">--</span>
+        </div>
+      </div>
+      <div class="flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
+        <span class="material-icons text-red-400 text-base mt-0.5">warning</span>
+        <p class="text-xs text-red-300">
+          This action cannot be undone. Deleting an interface will remove its configuration from the device.
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3">
+        <button id="cancelDelete" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-all" data-delete-close="true">
+          Cancel
+        </button>
+        <button
+          id="confirmDelete"
+          class="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2"
+        >
+          <span class="material-icons animate-spin text-sm hidden" id="deleteSpinner">refresh</span>
+          <span id="deleteSubmitLabel">Delete</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toggle Interface State Modal -->
+<div id="togglePowerModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-orange-900/20 to-orange-800/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-orange-400">power_settings_new</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white" id="togglePowerTitle">Toggle Interface</h3>
+          <p class="text-xs text-gray-400">Change interface state</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-toggle-power-close="true">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <p class="text-gray-300 mb-4" id="togglePowerMessage">Toggle interface state?</p>
+      <div class="bg-gray-900/50 border border-gray-700/50 rounded-xl p-4 text-sm text-gray-200 mb-4 space-y-2">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Interface</span>
+          <span class="font-semibold" id="togglePowerInterface">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Current State</span>
+          <span class="font-semibold" id="togglePowerState">--</span>
+        </div>
+      </div>
+      <div class="flex items-start gap-2 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mb-4">
+        <span class="material-icons text-orange-400 text-base mt-0.5">info</span>
+        <p class="text-xs text-orange-300">
+          The interface will change state immediately. Services depending on this interface may be impacted.
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3">
+        <button class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-all" data-toggle-power-close="true">
+          Cancel
+        </button>
+        <button
+          id="confirmTogglePower"
+          class="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2"
+        >
+          <span class="material-icons animate-spin text-sm hidden" id="togglePowerSpinner">refresh</span>
+          <span id="togglePowerSubmitLabel">Confirm</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Validation Error Modal -->
+<div id="validationErrorModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-red-900/20 to-red-800/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-red-400">error</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Validation Error</h3>
+          <p class="text-xs text-gray-400">Invalid network configuration</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-validation-error-close="true">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <p class="text-gray-300 mb-4" id="validationErrorMessage">An error occurred.</p>
+      <div class="flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
+        <span class="material-icons text-red-400 text-base mt-0.5">info</span>
+        <p class="text-xs text-red-300">
+          Please correct the network prefix and try again. The suggested network address should be used for proper network alignment.
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end">
+        <button
+          class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-semibold shadow-lg transition-all"
+          data-validation-error-close="true"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Remove Zone Assignment Modal -->
+<div id="unassignZoneModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-yellow-900/20 to-yellow-800/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-yellow-400">link_off</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Remove from Zone</h3>
+          <p class="text-xs text-gray-400">Clear zone assignment</p>
+        </div>
+      </div>
+      <button class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all" data-unassign-close="true">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <p class="text-gray-300 mb-4" id="unassignZoneMessage">Remove interface from the selected zone?</p>
+      <div class="bg-gray-900/50 border border-gray-700/50 rounded-xl p-4 text-sm text-gray-200 mb-4 space-y-2">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Interface</span>
+          <span class="font-semibold" id="unassignZoneInterface">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Current Zone</span>
+          <span class="font-semibold" id="unassignZoneZone">--</span>
+        </div>
+      </div>
+      <div class="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+        <span class="material-icons text-yellow-400 text-base mt-0.5">info</span>
+        <p class="text-xs text-yellow-300">
+          The interface will remain configured, but its firewall zone membership will be cleared.
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-3">
+        <button class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-all" data-unassign-close="true">
+          Cancel
+        </button>
+        <button
+          id="confirmUnassignZone"
+          class="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-gray-900 rounded-xl font-semibold shadow-lg transition-all flex items-center gap-2"
+        >
+          <span class="material-icons animate-spin text-sm hidden" id="unassignZoneSpinner">refresh</span>
+          <span id="unassignZoneSubmitLabel">Remove</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% block title %}NAT{% endblock %}
+{% set active = 'nat' %}
+
+{% block header %}
+<div class="flex items-center gap-3 mb-2">
+  <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+    <span class="material-icons text-white text-2xl">swap_horiz</span>
+  </div>
+  <div>
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-teal-400 to-cyan-500 bg-clip-text text-transparent">
+      Network Address Translation
+    </h1>
+    <p class="text-gray-400 text-sm">Configure source and destination NAT rules</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Source NAT Section -->
+<div class="mb-6">
+  <!-- Source NAT Header -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-t-2xl p-6 shadow-2xl">
+    <div class="flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-teal-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-teal-400">call_made</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white">Source NAT Rules</h2>
+          <p class="text-xs text-gray-400">Outbound traffic translation (masquerade)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Order Control Buttons (hidden by default) -->
+        <div id="sourceOrderControls" class="hidden flex items-center gap-2">
+          <button onclick="discardSourceOrder()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2">
+            <span class="material-icons text-sm">close</span>
+            Discard
+          </button>
+          <button id="saveSourceOrderBtn" onclick="saveSourceOrder()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+            <span id="saveSourceOrderSpinner" class="material-icons text-sm hidden animate-spin">refresh</span>
+            <span id="saveSourceOrderIcon" class="material-icons text-sm">save</span>
+            <span id="saveSourceOrderLabel">Save Order</span>
+          </button>
+        </div>
+
+        <button id="addSourceNATBtn" onclick="openSourceNATModal()" class="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+          <span class="material-icons text-sm">add</span>
+          Add Source NAT
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Source NAT Table -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border-x border-b border-gray-700/50 rounded-b-2xl shadow-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-700/50 border-b border-gray-700">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider w-12"></th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Rule #</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Description</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Outbound Interface</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Source Address</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Translation</th>
+            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="sourceNATTable" class="divide-y divide-gray-700/50">
+          {% set source_rules = rules | selectattr('type', 'equalto', 'source') | list %}
+          {% if source_rules %}
+            {% for rule in source_rules %}
+            <tr class="hover:bg-gray-700/30 transition-colors cursor-grab" draggable="true" data-rule-number="{{ rule.rule_number }}" data-rule-type="source" data-index="{{ loop.index0 }}">
+              <td class="px-4 py-3">
+                <span class="material-icons text-gray-500 text-base">drag_indicator</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-gradient-to-br from-teal-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center">
+                    <span class="text-sm font-bold text-teal-400">{{ rule.rule_number }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm text-gray-300">{{ rule.description or 'No description' }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1">
+                  <span class="material-icons text-xs text-cyan-400">settings_ethernet</span>
+                  <span class="text-sm font-mono text-cyan-300">{{ rule.outbound_interface or 'N/A' }}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm font-mono text-gray-300">{{ rule.source_address or 'N/A' }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm font-mono text-green-300">{{ rule.translation or 'N/A' }}</span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button onclick='editSourceNATRule({{ rule | tojson }})' class="text-blue-400 hover:text-blue-300 transition-colors p-2 hover:bg-blue-500/10 rounded-lg" title="Edit">
+                    <span class="material-icons text-sm">edit</span>
+                  </button>
+                  <button onclick="deleteRule('{{ rule.type }}', '{{ rule.rule_number }}')" class="text-red-400 hover:text-red-300 transition-colors p-2 hover:bg-red-500/10 rounded-lg" title="Delete">
+                    <span class="material-icons text-sm">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="px-4 py-8 text-center">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="w-16 h-16 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center">
+                    <span class="material-icons text-3xl text-gray-500">call_made</span>
+                  </div>
+                  <p class="text-gray-400">No source NAT rules configured</p>
+                  <p class="text-sm text-gray-500">Click "Add Source NAT" to create your first rule</p>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Destination NAT Section -->
+<div>
+  <!-- Destination NAT Header -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-t-2xl p-6 shadow-2xl">
+    <div class="flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-blue-400">call_received</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white">Destination NAT Rules</h2>
+          <p class="text-xs text-gray-400">Inbound traffic translation (port forwarding)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Order Control Buttons (hidden by default) -->
+        <div id="destOrderControls" class="hidden flex items-center gap-2">
+          <button onclick="discardDestOrder()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2">
+            <span class="material-icons text-sm">close</span>
+            Discard
+          </button>
+          <button id="saveDestOrderBtn" onclick="saveDestOrder()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+            <span id="saveDestOrderSpinner" class="material-icons text-sm hidden animate-spin">refresh</span>
+            <span id="saveDestOrderIcon" class="material-icons text-sm">save</span>
+            <span id="saveDestOrderLabel">Save Order</span>
+          </button>
+        </div>
+
+        <button id="addDestNATBtn" onclick="openDestinationNATModal()" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+          <span class="material-icons text-sm">add</span>
+          Add Destination NAT
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Destination NAT Table -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border-x border-b border-gray-700/50 rounded-b-2xl shadow-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-700/50 border-b border-gray-700">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider w-12"></th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Rule #</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Description</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Inbound Interface</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Protocol</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Destination</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Translation</th>
+            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="destinationNATTable" class="divide-y divide-gray-700/50">
+          {% set destination_rules = rules | selectattr('type', 'equalto', 'destination') | list %}
+          {% if destination_rules %}
+            {% for rule in destination_rules %}
+            <tr class="hover:bg-gray-700/30 transition-colors cursor-grab" draggable="true" data-rule-number="{{ rule.rule_number }}" data-rule-type="destination" data-index="{{ loop.index0 }}">
+              <td class="px-4 py-3">
+                <span class="material-icons text-gray-500 text-base">drag_indicator</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
+                    <span class="text-sm font-bold text-blue-400">{{ rule.rule_number }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm text-gray-300">{{ rule.description or 'No description' }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1">
+                  <span class="material-icons text-xs text-cyan-400">settings_ethernet</span>
+                  <span class="text-sm font-mono text-cyan-300">{{ rule.inbound_interface or 'N/A' }}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-1 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-lg text-xs font-medium uppercase">
+                  {{ rule.protocol or 'N/A' }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm font-mono text-gray-300">{{ rule.destination_address or 'Any' }}</span>
+                {% if rule.destination_port %}
+                <span class="text-sm font-bold text-purple-400">:</span><span class="text-sm font-semibold text-purple-300">{{ rule.destination_port }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                {% if rule.translation_address == 'redirect' %}
+                <span class="text-sm font-mono text-green-300">Redirect</span>
+                {% else %}
+                <span class="text-sm font-mono text-green-300">{{ rule.translation_address or 'N/A' }}</span>
+                {% endif %}
+                {% if rule.translation_port %}
+                <span class="text-sm font-bold text-cyan-400">:</span><span class="text-sm font-semibold text-cyan-300">{{ rule.translation_port }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button onclick='editDestinationNATRule({{ rule | tojson }})' class="text-blue-400 hover:text-blue-300 transition-colors p-2 hover:bg-blue-500/10 rounded-lg" title="Edit">
+                    <span class="material-icons text-sm">edit</span>
+                  </button>
+                  <button onclick="deleteRule('{{ rule.type }}', '{{ rule.rule_number }}')" class="text-red-400 hover:text-red-300 transition-colors p-2 hover:bg-red-500/10 rounded-lg" title="Delete">
+                    <span class="material-icons text-sm">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" class="px-4 py-8 text-center">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="w-16 h-16 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center">
+                    <span class="material-icons text-3xl text-gray-500">call_received</span>
+                  </div>
+                  <p class="text-gray-400">No destination NAT rules configured</p>
+                  <p class="text-sm text-gray-500">Click "Add Destination NAT" to create your first port forwarding rule</p>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Source NAT Modal -->
+<div id="sourceNATModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all">
+    <div class="flex items-center justify-between p-6 border-b border-gray-700/50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-teal-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-teal-400">call_made</span>
+        </div>
+        <div>
+          <h3 id="sourceModalTitle" class="text-xl font-bold text-white">Add Source NAT Rule</h3>
+          <p class="text-sm text-gray-400">Outbound traffic translation</p>
+        </div>
+      </div>
+      <button onclick="closeSourceNATModal()" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700/50 rounded-lg">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <form id="sourceNATForm" class="p-6 space-y-4">
+      <input type="hidden" id="sourceEditRuleNumber" value="">
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+        <input type="text" id="source_description" name="description" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" placeholder="e.g., NAT for LAN">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Outbound Interface *</label>
+          <select id="source_outbound_interface" name="outbound_interface" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" required>
+            <option value="">Select interface</option>
+            {% for iface in interfaces %}
+            <option value="{{ iface }}">{{ iface }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Source Address *</label>
+          <input type="text" id="source_source_address" name="source_address" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" placeholder="e.g., 192.168.1.0/24" required>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Translation</label>
+        <select id="source_translation" name="translation" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+          <option value="masquerade">Masquerade (use outbound interface IP)</option>
+        </select>
+      </div>
+    </form>
+
+    <div class="flex gap-3 p-6 border-t border-gray-700/50">
+      <button onclick="closeSourceNATModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-all">
+        Cancel
+      </button>
+      <button onclick="saveSourceNATRule()" id="saveSourceNATBtn" class="flex-1 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-4 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+        <span class="material-icons text-sm animate-spin hidden" id="saveSourceNATSpinner">refresh</span>
+        <span class="material-icons text-sm" id="saveSourceNATIcon">save</span>
+        <span id="saveSourceNATBtnText">Save Rule</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Destination NAT Modal -->
+<div id="destinationNATModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all">
+    <div class="flex items-center justify-between p-6 border-b border-gray-700/50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-blue-400">call_received</span>
+        </div>
+        <div>
+          <h3 id="destModalTitle" class="text-xl font-bold text-white">Add Destination NAT Rule</h3>
+          <p class="text-sm text-gray-400">Port forwarding (inbound)</p>
+        </div>
+      </div>
+      <button onclick="closeDestinationNATModal()" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700/50 rounded-lg">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <form id="destinationNATForm" class="p-6 space-y-4">
+      <input type="hidden" id="destEditRuleNumber" value="">
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+        <input type="text" id="dest_description" name="description" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g., Forward HTTP">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Inbound Interface *</label>
+          <select id="dest_inbound_interface" name="inbound_interface" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+            <option value="">Select interface</option>
+            {% for iface in interfaces %}
+            <option value="{{ iface }}">{{ iface }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Protocol *</label>
+          <select id="dest_protocol" name="protocol" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+            <option value="tcp">TCP</option>
+            <option value="udp">UDP</option>
+            <option value="tcp_udp">TCP & UDP</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Destination Address</label>
+          <input type="text" id="dest_destination_address" name="destination_address" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g., 203.0.113.1">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Destination Port *</label>
+          <input type="text" id="dest_destination_port" name="destination_port" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g., 80" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Translation Address *</label>
+          <input type="text" id="dest_translation_address" name="translation_address" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="IP or 'redirect'" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Translation Port</label>
+          <input type="text" id="dest_translation_port" name="translation_port" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="e.g., 8080">
+        </div>
+      </div>
+    </form>
+
+    <div class="flex gap-3 p-6 border-t border-gray-700/50">
+      <button onclick="closeDestinationNATModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-all">
+        Cancel
+      </button>
+      <button onclick="saveDestinationNATRule()" id="saveDestNATBtn" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+        <span class="material-icons text-sm animate-spin hidden" id="saveDestNATSpinner">refresh</span>
+        <span class="material-icons text-sm" id="saveDestNATIcon">save</span>
+        <span id="saveDestNATBtnText">Save Rule</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete NAT Rule Modal -->
+<div id="deleteNATModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700/50 overflow-hidden">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-red-900/20 to-pink-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-red-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-red-400">delete</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Delete NAT Rule</h3>
+          <p class="text-xs text-gray-400">This action cannot be undone</p>
+        </div>
+      </div>
+      <button onclick="closeDeleteNATModal()" class="material-icons text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg p-2 transition-all">close</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <div class="flex items-start gap-3 mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+        <span class="material-icons text-red-400 mt-0.5">warning</span>
+        <p class="text-gray-300 text-sm" id="deleteNATMessage">
+          Are you sure you want to delete <span id="deleteNATType" class="font-semibold text-white">source</span> NAT rule <span id="deleteNATNumber" class="font-semibold text-white">--</span>?
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button onclick="closeDeleteNATModal()" class="px-5 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-medium transition-all">Cancel</button>
+        <button id="confirmDeleteNAT"
+          onclick="confirmDeleteNATRule()"
+          class="px-5 py-3 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 rounded-xl text-white font-semibold inline-flex items-center gap-2 shadow-lg transition-all">
+          <span class="material-icons text-sm animate-spin hidden" id="deleteNATSpinner">refresh</span>
+          <span class="material-icons text-sm" id="deleteNATIcon">delete</span>
+          <span id="deleteNATSubmitLabel">Delete</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Initialize rule data from server-side render
+window.initialNATRules = {{ rules | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/nat.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,36 @@
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+  <div class="flex flex-wrap gap-4 items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+        <span class="material-icons text-blue-400">dvr</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-white">Active Interfaces</h2>
+        <p class="text-xs text-gray-400">Configure physical and virtual network adapters</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        id="addInterfaceBtn"
+        {% if not available_interfaces %}
+          disabled
+          class="px-4 py-2 bg-gray-700 text-gray-400 rounded-xl text-sm font-medium flex items-center gap-2 cursor-not-allowed opacity-50"
+        {% else %}
+          class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-sm rounded-xl text-white font-semibold shadow-lg transition-all"
+        {% endif %}
+      >
+        <span class="material-icons text-sm">add_circle</span>
+        Add Interface
+      </button>
+
+      <button
+        id="createVlanBtn"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm rounded-xl text-white font-semibold shadow-lg transition-all"
+      >
+        <span class="material-icons text-sm">playlist_add</span>
+        Add VLAN
+      </button>
+    </div>
+  </div>
+</div>
