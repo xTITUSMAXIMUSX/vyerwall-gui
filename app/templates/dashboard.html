@@ -38,7 +38,7 @@
 
     <div class="flex items-center gap-2 mt-3">
       <span class="material-icons text-xs text-gray-500 animate-pulse">sync</span>
-      <p class="text-gray-500 text-xs">Auto-refresh every 3s</p>
+      <p class="text-gray-500 text-xs">Auto-refresh every 10s</p>
     </div>
   </div>
 
@@ -622,7 +622,7 @@ updateSystemInfo();
 updateFirewallActivity();
 updateDHCPLeases();
 
-// Auto-refresh every 3 seconds
+// Auto-refresh every 10 seconds
 setInterval(() => {
   updateCPU();
   updateMemory();
@@ -630,7 +630,7 @@ setInterval(() => {
   updateSystemInfo();
   updateFirewallActivity();
   updateDHCPLeases();
-}, 3000);
+}, 10000);
 </script>
 
 {% endblock %}
