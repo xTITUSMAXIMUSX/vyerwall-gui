@@ -41,7 +41,7 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <span class="material-icons text-white text-lg">{% if '.' in name %}lan{% else %}router{% endif %}</span>
+                    <span class="material-icons text-white text-lg">settings_ethernet</span>
                   </div>
                   <div>
                     <div class="font-semibold text-gray-100 group-hover:text-blue-400 transition-colors">{{ name }}</div>
@@ -52,16 +52,6 @@
                 </div>
                 <span class="material-icons text-gray-600 group-hover:text-blue-400 transition-colors">chevron_right</span>
               </div>
-              {% if info.address %}
-              <div class="mt-2 flex flex-wrap gap-1">
-                {% for addr in info.address[:2] %}
-                <span class="text-xs px-2 py-1 bg-gray-700/50 rounded-md text-gray-400 font-mono">{{ addr }}</span>
-                {% endfor %}
-                {% if info.address|length > 2 %}
-                <span class="text-xs px-2 py-1 bg-gray-700/50 rounded-md text-gray-500">+{{ info.address|length - 2 }}</span>
-                {% endif %}
-              </div>
-              {% endif %}
             </button>
             {% endfor %}
           {% else %}

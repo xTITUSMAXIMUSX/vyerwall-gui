@@ -2,6 +2,7 @@ import ipaddress
 from flask import Blueprint, render_template, current_app, request, jsonify
 from app.auth import login_required
 from app.core import mark_config_dirty
+from app.modules.interfaces.device import configure_multiple_op
 
 from .utils import (
     ensure_dict,
@@ -747,22 +748,26 @@ def create_dhcp(iface):
         global_commands = _build_global_set_commands(global_settings)
         all_commands = set_commands + global_commands
 
-        device = current_app.device
-        current_app.logger.debug("DHCP create commands: %s", all_commands)
-
-        # Send all commands in a single payload
-        if all_commands:
-            resp = device.configure_set(path=all_commands)
-            if resp and hasattr(resp, 'error') and resp.error:
-                error_msg = str(resp.error).strip()
-                if error_msg and "list index out of range" not in error_msg.lower():
-                    raise RuntimeError(f"Configure set failed: {error_msg}")
-
         # Handle disable state
         if not data.get("enabled", True):
             shared_network = strip_or_none(data.get("sharedNetwork"))
             disable_cmd = ["service", "dhcp-server", "shared-network-name", shared_network, "disable"]
-            device.configure_set(path=[disable_cmd])
+            all_commands.append(disable_cmd)
+
+        current_app.logger.debug("DHCP create commands: %s", all_commands)
+
+        # Build operations for configure_multiple_op
+        operations = [{"op": "set", "path": path} for path in all_commands]
+
+        # Execute all operations in a single batch
+        if operations:
+            success, error_message = configure_multiple_op(
+                operations,
+                error_context="create DHCP configuration"
+            )
+
+            if not success:
+                raise RuntimeError(error_message or "Failed to create DHCP configuration")
 
         # Mark configuration as dirty (unsaved changes)
         mark_config_dirty()
@@ -820,27 +825,8 @@ def update_dhcp(iface):
         all_delete = delete_commands + global_delete_commands
         all_set = set_commands + global_set_commands
 
-        device = current_app.device
         current_app.logger.debug("DHCP update delete: %s", all_delete)
         current_app.logger.debug("DHCP update set: %s", all_set)
-
-        # Delete removed items first
-        if all_delete:
-            for delete_path in all_delete:
-                resp = device.configure_delete(path=delete_path)
-                if resp and hasattr(resp, 'error') and resp.error:
-                    error_msg = str(resp.error).strip().lower()
-                    # Ignore "not exist" and "list index" errors
-                    if error_msg and "not exist" not in error_msg and "list index out of range" not in error_msg:
-                        current_app.logger.warning(f"Delete warning: {resp.error}")
-
-        # Apply new settings (these will overwrite existing values)
-        if all_set:
-            resp = device.configure_set(path=all_set)
-            if resp and hasattr(resp, 'error') and resp.error:
-                error_msg = str(resp.error).strip()
-                if error_msg and "list index out of range" not in error_msg.lower():
-                    raise RuntimeError(f"Configure set failed: {error_msg}")
 
         # Handle enable/disable state
         shared_network = strip_or_none(data.get("sharedNetwork"))
@@ -848,10 +834,25 @@ def update_dhcp(iface):
 
         if data.get("enabled", True):
             # Remove disable flag if exists
-            device.configure_delete(path=base_path + ["disable"])
+            all_delete.append(base_path + ["disable"])
         else:
             # Add disable flag
-            device.configure_set(path=[base_path + ["disable"]])
+            all_set.append(base_path + ["disable"])
+
+        # Build operations for configure_multiple_op (delete first, then set)
+        operations = []
+        operations.extend([{"op": "delete", "path": path} for path in all_delete])
+        operations.extend([{"op": "set", "path": path} for path in all_set])
+
+        # Execute all operations in a single batch
+        if operations:
+            success, error_message = configure_multiple_op(
+                operations,
+                error_context="update DHCP configuration"
+            )
+
+            if not success:
+                raise RuntimeError(error_message or "Failed to update DHCP configuration")
 
         # Mark configuration as dirty (unsaved changes)
         mark_config_dirty()

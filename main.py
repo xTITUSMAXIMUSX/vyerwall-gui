@@ -31,6 +31,7 @@ from app.modules.dhcp import dhcp_bp
 from app.modules.firewall import rules_bp, zone_bp
 from app.core import config_bp, is_config_dirty
 from app.modules.nat import nat_bp
+from app.modules.static_routes import static_routes_bp
 
 # Create Flask application
 app = Flask(
@@ -64,6 +65,7 @@ app.register_blueprint(rules_bp)
 app.register_blueprint(zone_bp)
 app.register_blueprint(config_bp)
 app.register_blueprint(nat_bp)
+app.register_blueprint(static_routes_bp)
 
 
 @app.route('/')

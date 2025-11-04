@@ -1,11 +1,19 @@
 import json
 import re
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, current_app, jsonify
 from app.auth import login_required
 
 dashboard_bp = Blueprint('dashboard', __name__)
+
+# Simple cache for static data (hostname, version)
+_static_cache = {
+    'hostname': None,
+    'version': None,
+    'last_updated': None,
+    'cache_duration': timedelta(minutes=5)  # Cache for 5 minutes
+}
 
 @dashboard_bp.route('/get-cpu-usage')
 @login_required
@@ -141,24 +149,48 @@ def get_storage_usage():
 
 
 def fetch_system_info():
-    """Fetch system overview information"""
+    """Fetch system overview information with caching for static data"""
     try:
-        # Get hostname
-        hostname_data = current_app.device.show(path=["host", "name"])
-        hostname = hostname_data.result.strip() if hostname_data.result else "Unknown"
+        # Check if cached static data is still valid
+        now = datetime.now()
+        cache_valid = (
+            _static_cache['last_updated'] is not None and
+            _static_cache['hostname'] is not None and
+            _static_cache['version'] is not None and
+            (now - _static_cache['last_updated']) < _static_cache['cache_duration']
+        )
 
-        # Get version
-        version_data = current_app.device.show(path=["version"])
-        version_lines = version_data.result.splitlines()
-        version = "Unknown"
-        for line in version_lines:
-            if "Version:" in line:
-                version = line.split("Version:", 1)[1].strip()
-                break
+        if cache_valid:
+            # Use cached hostname and version
+            hostname = _static_cache['hostname']
+            version = _static_cache['version']
+        else:
+            # Fetch fresh hostname and version
+            hostname_data = current_app.device.show(path=["host", "name"])
+            hostname = hostname_data.result.strip() if hostname_data.result else "Unknown"
+
+            version_data = current_app.device.show(path=["version"])
+            version_lines = version_data.result.splitlines()
+            version = "Unknown"
+            for line in version_lines:
+                if "Version:" in line:
+                    version = line.split("Version:", 1)[1].strip()
+                    break
+
+            # Update cache
+            _static_cache['hostname'] = hostname
+            _static_cache['version'] = version
+            _static_cache['last_updated'] = now
 
         # Get uptime
-        uptime_data = current_app.device.show(path=["uptime"])
-        uptime = uptime_data.result.strip() if uptime_data.result else "Unknown"
+        uptime_data = current_app.device.show(path=["system", "uptime"])
+        uptime = "Unknown"
+        if uptime_data.result:
+            # Parse output: "Uptime: 1d 2h 53m 22s\n\nLoad averages:..."
+            for line in uptime_data.result.splitlines():
+                if line.strip().startswith("Uptime:"):
+                    uptime = line.split("Uptime:", 1)[1].strip()
+                    break
 
         # Get load average from processes
         load_data = current_app.device.show(["system", "processes", "extensive"])

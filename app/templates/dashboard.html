@@ -622,15 +622,32 @@ updateSystemInfo();
 updateFirewallActivity();
 updateDHCPLeases();
 
-// Auto-refresh every 10 seconds
+// Staggered refresh intervals for optimal performance
+// Critical metrics: Update every 10 seconds
 setInterval(() => {
   updateCPU();
   updateMemory();
-  updateStorage();
-  updateSystemInfo();
-  updateFirewallActivity();
-  updateDHCPLeases();
 }, 10000);
+
+// Storage: Update every 30 seconds (changes slowly)
+setInterval(() => {
+  updateStorage();
+}, 30000);
+
+// System info (uptime only changes): Update every 60 seconds
+setInterval(() => {
+  updateSystemInfo();
+}, 60000);
+
+// Network activity: Update every 15 seconds
+setInterval(() => {
+  updateFirewallActivity();
+}, 15000);
+
+// DHCP leases: Update every 30 seconds
+setInterval(() => {
+  updateDHCPLeases();
+}, 30000);
 </script>
 
 {% endblock %}

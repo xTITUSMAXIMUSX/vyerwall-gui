@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}Static Routes{% endblock %}
+{% set active = 'static-routes' %}
+
+{% block header %}
+<div class="flex items-center gap-3 mb-2">
+  <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
+    <span class="material-icons text-white text-2xl">route</span>
+  </div>
+  <div>
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
+      Static Routes
+    </h1>
+    <p class="text-gray-400 text-sm">Manage network routing table entries</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Toolbar -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-4 shadow-2xl">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-emerald-400">info</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-300">Configure static routes for network traffic</p>
+          <p class="text-xs text-gray-500 mt-0.5">Routes define how packets are forwarded to different networks</p>
+        </div>
+      </div>
+      <button
+        id="addRouteBtn"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-sm rounded-xl text-white font-semibold shadow-lg transition-all"
+      >
+        <span class="material-icons text-sm">add_circle</span>
+        Add Route
+      </button>
+    </div>
+  </div>
+
+  <!-- Routes Table -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+    <div class="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-emerald-900/20 to-teal-900/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-emerald-400">route</span>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Routing Table</h3>
+          <p class="text-xs text-gray-400">Active static route entries</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-gray-400">
+        <span class="material-icons text-xs">info</span>
+        <span id="routeCount">{{ routes|length }} routes</span>
+      </div>
+    </div>
+    <div class="overflow-x-auto overflow-y-auto max-h-[36rem] custom-scrollbar">
+      <table class="min-w-full text-sm text-gray-200" id="routesTable">
+        <thead class="bg-gradient-to-r from-gray-800 to-gray-900 text-gray-300 text-xs font-semibold tracking-wider sticky top-0 z-10">
+          <tr>
+            <th class="px-5 py-4 text-left border-b border-gray-700/50">
+              <div class="flex items-center gap-2">
+                <span class="material-icons text-xs text-emerald-400">place</span>
+                <span>Destination Network</span>
+              </div>
+            </th>
+            <th class="px-5 py-4 text-left border-b border-gray-700/50">
+              <div class="flex items-center gap-2">
+                <span class="material-icons text-xs text-emerald-400">arrow_forward</span>
+                <span>Next Hop</span>
+              </div>
+            </th>
+            <th class="px-5 py-4 text-left border-b border-gray-700/50">
+              <div class="flex items-center gap-2">
+                <span class="material-icons text-xs text-emerald-400">description</span>
+                <span>Description</span>
+              </div>
+            </th>
+            <th class="px-5 py-4 text-right border-b border-gray-700/50">
+              <div class="flex items-center justify-end gap-2">
+                <span class="material-icons text-xs text-emerald-400">settings</span>
+                <span>Actions</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="routesTableBody" class="divide-y divide-gray-800/50">
+          {% if routes %}
+            {% for route in routes %}
+            <tr class="hover:bg-gradient-to-r hover:from-emerald-900/10 hover:to-teal-900/10 transition-all">
+              <td class="px-5 py-4 font-semibold">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-lg flex items-center justify-center">
+                    <span class="material-icons text-emerald-400 text-base">public</span>
+                  </div>
+                  <span class="text-white font-mono">{{ route.destination }}</span>
+                </div>
+              </td>
+              <td class="px-5 py-4">
+                <span class="font-mono text-cyan-300">{{ route.next_hop }}</span>
+              </td>
+              <td class="px-5 py-4">
+                {% if route.description %}
+                <span class="text-gray-300">{{ route.description }}</span>
+                {% else %}
+                <span class="text-gray-500 italic">No description</span>
+                {% endif %}
+              </td>
+              <td class="px-5 py-4">
+                <div class="flex justify-end gap-3">
+                  <button
+                    class="text-blue-400 hover:text-blue-300 transition-colors edit-route-btn p-1"
+                    data-destination="{{ route.destination }}"
+                    data-next-hop="{{ route.next_hop }}"
+                    data-description="{{ route.description }}"
+                    title="Edit Route"
+                  >
+                    <span class="material-icons text-base">edit</span>
+                  </button>
+                  <button
+                    class="text-red-400 hover:text-red-300 transition-colors delete-route-btn p-1"
+                    data-destination="{{ route.destination }}"
+                    data-next-hop="{{ route.next_hop }}"
+                    title="Delete Route"
+                  >
+                    <span class="material-icons text-base">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="4" class="px-5 py-12 text-center text-gray-400">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="w-16 h-16 bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl flex items-center justify-center">
+                    <span class="material-icons text-3xl text-gray-600">route</span>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-300 mb-1">No static routes configured</p>
+                    <p class="text-sm text-gray-500">Click "Add Route" to create your first static route</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% include 'static_routes/_modals.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/static_routes.js') }}"></script>
+{% endblock %}

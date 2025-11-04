@@ -2,7 +2,8 @@
 <html lang="en"
   x-data="{
     openServices: {% if active == 'services' %}true{% else %}false{% endif %},
-    openFirewall: {% if active == 'firewall' or active == 'nat' %}true{% else %}false{% endif %}
+    openFirewall: {% if active == 'firewall' or active == 'nat' %}true{% else %}false{% endif %},
+    openRouting: {% if active == 'static-routes' %}true{% else %}false{% endif %}
   }">
 <head>
   <meta charset="UTF-8">
@@ -33,6 +34,30 @@
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
       background: rgba(107, 114, 128, 1);
+    }
+
+    /* Custom select dropdown styling */
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 1.25em 1.25em;
+      padding-right: 2.5rem;
+    }
+    select option {
+      background-color: #1f2937;
+      color: #f9fafb;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin: 2px 4px;
+    }
+    select option:hover,
+    select option:focus,
+    select option:checked {
+      background: linear-gradient(to right, #1e40af, #0891b2);
+      color: #ffffff;
+      border-radius: 8px;
     }
 
     /* Smooth transitions */
@@ -116,11 +141,28 @@
         <span class="font-medium group-hover:text-green-300">VPN</span>
       </a>
 
-      <a href="#"
-        class="group p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='routing' %}bg-gradient-to-r from-yellow-600/20 to-yellow-500/10 border-l-4 border-yellow-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
-        <span class="material-icons text-yellow-400 group-hover:scale-110 transition-transform">alt_route</span>
-        <span class="font-medium group-hover:text-yellow-300">Routing</span>
-      </a>
+      <!-- ROUTING COLLAPSIBLE MENU -->
+      <div>
+        <button @click="openRouting = !openRouting"
+          class="group w-full text-left p-3 rounded-xl hover:bg-gray-700/50 flex items-center gap-3 {% if active=='static-routes' %}bg-gradient-to-r from-emerald-600/20 to-emerald-500/10 border-l-4 border-emerald-500{% else %}border-l-4 border-transparent{% endif %} transition-all">
+          <span class="material-icons text-emerald-400 group-hover:scale-110 transition-transform">alt_route</span>
+          <span class="font-medium group-hover:text-emerald-300 flex-1">Routing</span>
+          <span class="material-icons text-sm text-gray-500 transition-transform duration-300"
+            :class="{ 'rotate-180': openRouting }">expand_more</span>
+        </button>
+
+        <div x-show="openRouting"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="flex flex-col pl-6 mt-1 space-y-1">
+          <a href="{{ url_for('static_routes.index') }}"
+            class="group p-2 pl-9 rounded-lg hover:bg-gray-700/30 flex items-center gap-2 text-sm {% if active=='static-routes' %}bg-gray-700/50 text-emerald-300{% else %}text-gray-400{% endif %} transition-all">
+            <span class="material-icons-outlined text-xs">route</span>
+            <span class="group-hover:text-gray-200">Static Routes</span>
+          </a>
+        </div>
+      </div>
 
       <!-- SERVICES COLLAPSIBLE MENU -->
       <div>
@@ -178,7 +220,7 @@
           <span class="material-icons text-white text-lg">person</span>
         </div>
         <div class="flex-1 min-w-0">
-          <div class="text-sm font-semibold text-gray-200 truncate">Administrator</div>
+          <div class="text-sm font-semibold text-gray-200 truncate">{{ session.get('user', 'User') }}</div>
           <div class="text-xs text-gray-500">Connected</div>
         </div>
       </div>
