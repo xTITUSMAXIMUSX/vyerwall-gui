@@ -14,6 +14,7 @@
     formatProtocolDisplay = (value) => value,
     formatEndpointDisplay = (value) => value,
     formatPortDisplay = (value) => value,
+    formatGroupDisplay = (value) => value,
     cloneRules = (rules) => (rules || []).map((rule) => ({ ...rule })),
   } = utils;
 
@@ -318,6 +319,7 @@
     }
 
     const canDrag = rules.length > 1;
+    const groupsDetails = state.groupsDetails || {};
     const rows = rules.map((rule, index) => {
       const rowClasses = ['border-t', 'border-gray-800', 'transition-colors'];
       if (canDrag) {
@@ -331,10 +333,10 @@
         : 'text-yellow-400 hover:text-yellow-300';
       const toggleIcon = rule.disabled ? 'check_circle' : 'block';
       const protocolDisplay = escapeHtml(formatProtocolDisplay(rule.protocol));
-      const sourceDisplay = escapeHtml(formatEndpointDisplay(rule.source));
-      const sourcePortDisplay = escapeHtml(formatPortDisplay(rule.source_port));
-      const destinationDisplay = escapeHtml(formatEndpointDisplay(rule.destination));
-      const destinationPortDisplay = escapeHtml(formatPortDisplay(rule.destination_port));
+      const sourceDisplay = formatGroupDisplay(rule.source, groupsDetails);
+      const sourcePortDisplay = formatGroupDisplay(rule.source_port, groupsDetails);
+      const destinationDisplay = formatGroupDisplay(rule.destination, groupsDetails);
+      const destinationPortDisplay = formatGroupDisplay(rule.destination_port, groupsDetails);
       const descriptionDisplay = escapeHtml(rule.description || '-');
       const actionMeta = getActionMeta(rule.action);
       const actionLabelEscaped = escapeHtml(actionMeta.label);

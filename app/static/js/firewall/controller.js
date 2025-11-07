@@ -646,6 +646,9 @@
   function bindPortPresets() {
     forms.setupPortPresets(fwState.forms.add, 'other');
     forms.setupPortPresets(fwState.forms.edit);
+    // Setup group toggles for both add and edit forms
+    forms.setupGroupToggles(fwState.forms.add, '');
+    forms.setupGroupToggles(fwState.forms.edit, 'edit');
   }
 
   function bindToggleButton() {
@@ -708,11 +711,13 @@
       initialName,
       initialDetails,
       firewall_zone_list: zoneListRaw,
+      groupsDetails,
     } = bootstrap;
 
     state.names = names || [];
     state.metadata = metadata || {};
     state.zoneGroups = {};
+    state.groupsDetails = groupsDetails || {};
 
     if (zoneGroups) {
       Object.entries(zoneGroups).forEach(([zone, pairs]) => {

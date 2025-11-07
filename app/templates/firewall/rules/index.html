@@ -144,12 +144,72 @@
     initialZone: {{ initial_zone | tojson }},
     initialName: {{ initial_name | tojson }},
     initialDetails: {{ initial_details | tojson }},
+    groupsDetails: {{ firewall_groups_details | tojson }},
   };
 </script>
 
 {% include 'firewall/rules/_modals.html' %}
 
 <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+
+<!-- Tooltip for group badges -->
+<div id="groupTooltip" class="hidden fixed z-[100] px-3 py-2 bg-gray-900 border border-purple-500/50 rounded-lg shadow-xl text-xs text-gray-200 pointer-events-none max-w-xs">
+  <div class="font-medium text-purple-300 mb-1" id="tooltipGroupName"></div>
+  <div id="tooltipMembers" class="text-gray-400"></div>
+</div>
+
+<style>
+  .group-badge {
+    position: relative;
+  }
+</style>
+
+<script>
+  // Initialize group badge tooltips
+  document.addEventListener('DOMContentLoaded', function() {
+    const tooltip = document.getElementById('groupTooltip');
+    const tooltipGroupName = document.getElementById('tooltipGroupName');
+    const tooltipMembers = document.getElementById('tooltipMembers');
+
+    if (!tooltip || !tooltipGroupName || !tooltipMembers) return;
+
+    // Delegate event handling for dynamically added elements
+    document.addEventListener('mouseenter', function(e) {
+      // Ensure we're working with an element node, not a text node
+      let target = e.target;
+      if (target.nodeType === 3) target = target.parentNode; // Text node
+      if (!target || !target.closest) return;
+
+      const badge = target.closest('.group-badge');
+      if (!badge) return;
+
+      const groupName = badge.dataset.groupName;
+      const tooltipText = badge.dataset.tooltip || '';
+
+      tooltipGroupName.textContent = groupName || 'Unknown';
+      tooltipMembers.textContent = tooltipText || 'No members';
+
+      tooltip.classList.remove('hidden');
+
+      // Position tooltip below the badge
+      const rect = badge.getBoundingClientRect();
+      tooltip.style.left = rect.left + 'px';
+      tooltip.style.top = (rect.bottom + 8) + 'px';
+    }, true);
+
+    document.addEventListener('mouseleave', function(e) {
+      // Ensure we're working with an element node, not a text node
+      let target = e.target;
+      if (target.nodeType === 3) target = target.parentNode; // Text node
+      if (!target || !target.closest) return;
+
+      const badge = target.closest('.group-badge');
+      if (!badge) return;
+
+      tooltip.classList.add('hidden');
+    }, true);
+  });
+</script>
 
 {% endblock %}
 

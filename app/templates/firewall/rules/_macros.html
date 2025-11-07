@@ -1,4 +1,29 @@
-{% macro rule_row(rule, action_meta) -%}
+{% macro format_group_display(value, firewall_groups_details) -%}
+  {%- if value and value.startswith('[group:') -%}
+    {%- set parts = value[7:-1].split(':') -%}
+    {%- if parts|length >= 2 -%}
+      {%- set group_type = parts[0] -%}
+      {%- set group_name = parts[1:] | join(':') -%}
+      {%- set lookup_key = group_type ~ ':' ~ group_name -%}
+      {%- set members = firewall_groups_details.get(lookup_key, []) -%}
+      {%- set member_list = members[:5] | join(', ') -%}
+      {%- set more_count = members|length - 5 -%}
+      <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-500/20 border border-purple-500/40 rounded-md text-purple-300 text-xs font-medium cursor-help group-badge"
+            data-group-type="{{ group_type }}"
+            data-group-name="{{ group_name }}"
+            data-tooltip="{{ member_list }}{% if more_count > 0 %} +{{ more_count }} more{% endif %}">
+        <span class="material-icons" style="font-size: 14px;">workspaces</span>
+        <span>{{ group_name }}</span>
+      </span>
+    {%- else -%}
+      {{ value }}
+    {%- endif -%}
+  {%- else -%}
+    {{ value if value else 'Any' }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro rule_row(rule, action_meta, firewall_groups_details) -%}
   {%- set proto_norm = (rule.protocol or '')|lower -%}
   {%- set protocol_display = 'All' if proto_norm in ['all', 'any', ''] else (rule.protocol or 'Any') -%}
   {%- set source_display = rule.source if rule.source and rule.source|lower != 'any' else 'Any' -%}
@@ -17,10 +42,10 @@
       </div>
     </td>
     <td class="px-4 py-3">{{ protocol_display }}</td>
-    <td class="px-4 py-3">{{ source_display }}</td>
-    <td class="px-4 py-3">{{ source_port_display }}</td>
-    <td class="px-4 py-3">{{ dest_display }}</td>
-    <td class="px-4 py-3">{{ dest_port_display }}</td>
+    <td class="px-4 py-3">{{ format_group_display(source_display, firewall_groups_details) }}</td>
+    <td class="px-4 py-3">{{ format_group_display(source_port_display, firewall_groups_details) }}</td>
+    <td class="px-4 py-3">{{ format_group_display(dest_display, firewall_groups_details) }}</td>
+    <td class="px-4 py-3">{{ format_group_display(dest_port_display, firewall_groups_details) }}</td>
     <td class="px-4 py-3">{{ rule.description or '-' }}</td>
     <td class="px-4 py-3">
       <div class="flex items-center gap-2 text-sm">

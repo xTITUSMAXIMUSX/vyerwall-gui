@@ -105,12 +105,18 @@ def find_nat_rule_for_iface(nat_rules: NatRules, iface_name: str, candidate_netw
         return None, None
     normalised = normalise_iface_name(iface_name)
     target_description = nat_rule_description(normalised or "")
+
+    # First, try to find by description (for backward compatibility)
     for rule_number, rule_cfg in nat_rules.items():
         if not isinstance(rule_cfg, dict):
             continue
         description_value = extract_leaf_value(rule_cfg.get("description"))
         if description_value == target_description:
             return rule_number, rule_cfg
+
+    # If not found by description and we have a candidate network,
+    # look for a rule with matching source network
+    # This allows users to customize descriptions while still cleaning up NAT rules
     if candidate_network:
         for rule_number, rule_cfg in nat_rules.items():
             if not isinstance(rule_cfg, dict):
@@ -118,6 +124,7 @@ def find_nat_rule_for_iface(nat_rules: NatRules, iface_name: str, candidate_netw
             network_value = extract_nat_source_network(rule_cfg)
             if network_value == candidate_network:
                 return rule_number, rule_cfg
+
     return None, None
 
 

@@ -161,52 +161,33 @@ def update_route():
         # Check if route destination/next-hop changed
         route_changed = (old_destination != new_destination) or (old_next_hop != new_next_hop)
 
+        # Combine all operations into a single payload for better performance
+        operations = []
+
         if route_changed:
-            # Need to delete old route first, then add new one (as separate operations)
-            # Step 1: Delete old route
+            # Delete old route and add new route in single payload
             delete_commands = build_route_delete_commands(old_destination, old_next_hop)
-            delete_operations = [{"op": "delete", "path": path} for path in delete_commands]
+            operations.extend([{"op": "delete", "path": path} for path in delete_commands])
 
-            success, error_message = configure_multiple_op(
-                delete_operations,
-                error_context=f"delete old static route {old_destination} via {old_next_hop}"
-            )
-
-            if not success:
-                return jsonify({
-                    'status': 'error',
-                    'message': error_message or 'Failed to delete old static route'
-                }), 500
-
-            # Step 2: Add new route
             set_commands = build_route_set_commands(new_destination, new_next_hop, description)
-            set_operations = [{"op": "set", "path": path} for path in set_commands]
+            operations.extend([{"op": "set", "path": path} for path in set_commands])
 
-            success, error_message = configure_multiple_op(
-                set_operations,
-                error_context=f"create new static route {new_destination} via {new_next_hop}"
-            )
-
-            if not success:
-                return jsonify({
-                    'status': 'error',
-                    'message': error_message or 'Failed to create new static route'
-                }), 500
+            error_context = f"update static route from {old_destination} via {old_next_hop} to {new_destination} via {new_next_hop}"
         else:
             # Only description changed, just update it
             set_commands = build_route_set_commands(new_destination, new_next_hop, description)
-            set_operations = [{"op": "set", "path": path} for path in set_commands]
+            operations.extend([{"op": "set", "path": path} for path in set_commands])
 
-            success, error_message = configure_multiple_op(
-                set_operations,
-                error_context=f"update static route description {new_destination} via {new_next_hop}"
-            )
+            error_context = f"update static route description {new_destination} via {new_next_hop}"
 
-            if not success:
-                return jsonify({
-                    'status': 'error',
-                    'message': error_message or 'Failed to update static route'
-                }), 500
+        # Execute all operations in a single API call
+        success, error_message = configure_multiple_op(operations, error_context=error_context)
+
+        if not success:
+            return jsonify({
+                'status': 'error',
+                'message': error_message or 'Failed to update static route'
+            }), 500
 
         # Mark config as dirty
         mark_config_dirty()

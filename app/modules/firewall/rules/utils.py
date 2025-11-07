@@ -40,15 +40,80 @@ def flatten_value(node: Any) -> str:
 
 
 def extract_rule_ports(block: Dict[str, Any]) -> Tuple[str, str]:
-    """Return (address, port) strings for a source/destination block."""
+    """Return (address, port) strings for a source/destination block.
+
+    Now also handles firewall groups with special formatting.
+    Groups are returned with a prefix like: [group:address-group:GROUP_NAME]
+    """
     if not isinstance(block, dict):
         return "", ""
 
-    address = flatten_value(block.get("address"))
-    port_entry = block.get("port") or block.get("port-name") or block.get("port-group")
-    port = flatten_value(port_entry)
-    if not port and isinstance(block.get("port"), dict):
-        port = flatten_value(block.get("port"))
+    address = ""
+    port = ""
+
+    # Check for add-address-to-group (used by dynamic groups)
+    add_to_group_block = block.get("add-address-to-group")
+    if isinstance(add_to_group_block, dict):
+        # This is for dynamic-group: extract the address-group name
+        # Structure: {"source-address": {"address-group": "GROUP_NAME"}} or {"destination-address": {...}}
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Found add-address-to-group block: {add_to_group_block}")
+        for key in ["source-address", "destination-address"]:
+            addr_block = add_to_group_block.get(key)
+            if isinstance(addr_block, dict):
+                addr_group = addr_block.get("address-group")
+                if addr_group:
+                    group_name = flatten_value(addr_group)
+                    address = f"[group:dynamic-group:{group_name}]"
+                    logger.debug(f"Extracted dynamic-group address: {address}")
+                    break
+
+    # Check for regular address groups
+    if not address:
+        group_block = block.get("group")
+        if isinstance(group_block, dict):
+            # Check all address-related group types
+            address_group_types = [
+                "address-group",
+                "network-group",
+                "mac-group",
+                "domain-group",
+                "dynamic-group",
+                "remote-group",
+                "ipv6-address-group",
+                "ipv6-network-group"
+            ]
+
+            for group_type in address_group_types:
+                group_value = group_block.get(group_type)
+                if group_value:
+                    group_name = flatten_value(group_value)
+                    address = f"[group:{group_type}:{group_name}]"
+                    break
+
+            if not address:
+                # No address group found, try regular address
+                address = flatten_value(block.get("address"))
+
+            # Port groups
+            port_group = group_block.get("port-group")
+            if port_group:
+                group_name = flatten_value(port_group)
+                port = f"[group:port-group:{group_name}]"
+            else:
+                port_entry = block.get("port") or block.get("port-name")
+                port = flatten_value(port_entry)
+                if not port and isinstance(block.get("port"), dict):
+                    port = flatten_value(block.get("port"))
+        else:
+            # No groups, use regular address/port extraction
+            address = flatten_value(block.get("address"))
+            port_entry = block.get("port") or block.get("port-name") or block.get("port-group")
+            port = flatten_value(port_entry)
+            if not port and isinstance(block.get("port"), dict):
+                port = flatten_value(block.get("port"))
+
     return address, port
 
 
@@ -117,21 +182,71 @@ def build_rule_set_commands(firewall_name: str, rule_number: int, payload: Dict[
     if description:
         commands.append(base + ["description", description])
 
-    src_addr = (payload.get("sourceAddress") or "").strip()
-    if src_addr:
-        commands.append(base + ["source", "address", src_addr])
+    # Handle source address (manual or group)
+    if payload.get("sourceAddressType") == "group":
+        src_group = (payload.get("sourceAddressGroup") or "").strip()
+        if src_group:
+            # Format: "address-group:GROUP_NAME" or "network-group:GROUP_NAME"
+            if ":" in src_group:
+                group_type, group_name = src_group.split(":", 1)
+                # Special handling for dynamic-group
+                if group_type == "dynamic-group":
+                    commands.append(base + ["add-address-to-group", "source-address", "address-group", group_name])
+                    # Add timeout if provided
+                    timeout_value = payload.get("sourceAddressTimeout")
+                    timeout_unit = payload.get("sourceAddressTimeoutUnit", "m")
+                    if timeout_value:
+                        timeout_str = f"{timeout_value}{timeout_unit}"
+                        commands.append(base + ["add-address-to-group", "source-address", "timeout", timeout_str])
+                else:
+                    commands.append(base + ["source", "group", group_type, group_name])
+    else:
+        src_addr = (payload.get("sourceAddress") or "").strip()
+        if src_addr:
+            commands.append(base + ["source", "address", src_addr])
 
-    src_tokens = split_port_list(payload.get("sourcePort"))
-    if src_tokens:
-        _append_port_commands(commands, base, "source", src_tokens)
+    # Handle source port (manual or group)
+    if payload.get("sourcePortType") == "group":
+        src_port_group = (payload.get("sourcePortGroup") or "").strip()
+        if src_port_group:
+            commands.append(base + ["source", "group", "port-group", src_port_group])
+    else:
+        src_tokens = split_port_list(payload.get("sourcePort"))
+        if src_tokens:
+            _append_port_commands(commands, base, "source", src_tokens)
 
-    dst_addr = (payload.get("destinationAddress") or "").strip()
-    if dst_addr:
-        commands.append(base + ["destination", "address", dst_addr])
+    # Handle destination address (manual or group)
+    if payload.get("destinationAddressType") == "group":
+        dst_group = (payload.get("destinationAddressGroup") or "").strip()
+        if dst_group:
+            # Format: "address-group:GROUP_NAME" or "network-group:GROUP_NAME"
+            if ":" in dst_group:
+                group_type, group_name = dst_group.split(":", 1)
+                # Special handling for dynamic-group
+                if group_type == "dynamic-group":
+                    commands.append(base + ["add-address-to-group", "destination-address", "address-group", group_name])
+                    # Add timeout if provided
+                    timeout_value = payload.get("destinationAddressTimeout")
+                    timeout_unit = payload.get("destinationAddressTimeoutUnit", "m")
+                    if timeout_value:
+                        timeout_str = f"{timeout_value}{timeout_unit}"
+                        commands.append(base + ["add-address-to-group", "destination-address", "timeout", timeout_str])
+                else:
+                    commands.append(base + ["destination", "group", group_type, group_name])
+    else:
+        dst_addr = (payload.get("destinationAddress") or "").strip()
+        if dst_addr:
+            commands.append(base + ["destination", "address", dst_addr])
 
-    dst_tokens = split_port_list(payload.get("destinationPort"))
-    if dst_tokens:
-        _append_port_commands(commands, base, "destination", dst_tokens)
+    # Handle destination port (manual or group)
+    if payload.get("destinationPortType") == "group":
+        dst_port_group = (payload.get("destinationPortGroup") or "").strip()
+        if dst_port_group:
+            commands.append(base + ["destination", "group", "port-group", dst_port_group])
+    else:
+        dst_tokens = split_port_list(payload.get("destinationPort"))
+        if dst_tokens:
+            _append_port_commands(commands, base, "destination", dst_tokens)
 
     disabled = payload.get("disabled")
     if isinstance(disabled, str):

@@ -29,6 +29,129 @@ from .utils import (
 rules_bp = Blueprint("firewall_rules", __name__, url_prefix="/firewall/rules")
 
 
+def _load_firewall_groups() -> Dict[str, List[str]]:
+    """Load firewall groups organized by type for use in firewall rules."""
+    try:
+        response = current_app.device.retrieve_show_config(path=["firewall", "group"])
+        config_data = getattr(response, "result", {}) or {}
+
+        groups = {
+            "address-group": [],
+            "network-group": [],
+            "port-group": [],
+            "mac-group": [],
+            "domain-group": [],
+            "dynamic-group": [],
+            "remote-group": [],
+            "ipv6-address-group": [],
+            "ipv6-network-group": []
+        }
+
+        for group_type in groups.keys():
+            type_config = config_data.get(group_type, {})
+            if isinstance(type_config, dict):
+                # Special handling for dynamic-group which has nested address-group structure
+                if group_type == "dynamic-group":
+                    # Structure: dynamic-group { address-group { NAME { } } }
+                    address_group_config = type_config.get("address-group", {})
+                    if isinstance(address_group_config, dict):
+                        groups[group_type] = sorted(address_group_config.keys())
+                    else:
+                        groups[group_type] = []
+                else:
+                    groups[group_type] = sorted(type_config.keys())
+
+        return groups
+    except Exception as e:
+        current_app.logger.error(f"Error loading firewall groups: {e}")
+        return {
+            "address-group": [],
+            "network-group": [],
+            "port-group": [],
+            "mac-group": [],
+            "domain-group": [],
+            "dynamic-group": [],
+            "remote-group": [],
+            "ipv6-address-group": [],
+            "ipv6-network-group": []
+        }
+
+
+def _load_firewall_groups_details() -> Dict[str, List[str]]:
+    """Load firewall groups with their members for tooltip display."""
+    try:
+        response = current_app.device.retrieve_show_config(path=["firewall", "group"])
+        config_data = getattr(response, "result", {}) or {}
+
+        group_details = {}
+
+        # Map group types to their member keys
+        group_type_mappings = {
+            "address-group": "address",
+            "network-group": "network",
+            "port-group": "port",
+            "mac-group": "mac-address",
+            "dynamic-group": "address",
+            "ipv6-address-group": "address",
+            "ipv6-network-group": "network",
+            "domain-group": "address",
+            "remote-group": "url",
+        }
+
+        for group_type, member_key in group_type_mappings.items():
+            type_config = config_data.get(group_type, {})
+
+            if isinstance(type_config, dict):
+                # Special handling for dynamic-group which has nested address-group structure
+                if group_type == "dynamic-group":
+                    # Structure: dynamic-group { address-group { NAME { address {...} } } }
+                    address_group_config = type_config.get("address-group", {})
+                    if isinstance(address_group_config, dict):
+                        for group_name, group_config in address_group_config.items():
+                            if isinstance(group_config, dict):
+                                members_data = group_config.get(member_key, {})
+                                members = []
+
+                                if isinstance(members_data, dict):
+                                    # Multiple members stored as dict keys
+                                    members = sorted(members_data.keys())
+                                elif isinstance(members_data, list):
+                                    # Multiple members stored as list
+                                    members = sorted(members_data)
+                                elif members_data:
+                                    # Single member stored as plain value (string, etc.)
+                                    members = [str(members_data)]
+
+                                # Store with full key for easy lookup
+                                lookup_key = f"{group_type}:{group_name}"
+                                group_details[lookup_key] = members
+                else:
+                    for group_name, group_config in type_config.items():
+                        if isinstance(group_config, dict):
+                            members_data = group_config.get(member_key, {})
+                            members = []
+
+                            if isinstance(members_data, dict):
+                                # Multiple members stored as dict keys
+                                members = sorted(members_data.keys())
+                            elif isinstance(members_data, list):
+                                # Multiple members stored as list
+                                members = sorted(members_data)
+                            elif members_data:
+                                # Single member stored as plain value (string, etc.)
+                                members = [str(members_data)]
+
+                            # Store with full key for easy lookup
+                            lookup_key = f"{group_type}:{group_name}"
+                            group_details[lookup_key] = members
+
+        current_app.logger.debug(f"Final group_details: {group_details}")
+        return group_details
+    except Exception as e:
+        current_app.logger.error(f"Error loading firewall group details: {e}")
+        return {}
+
+
 def _load_firewall_name(name: str) -> Dict[str, Any]:
     try:
         response = current_app.device.retrieve_show_config(path=["firewall", "ipv4", "name", name])
@@ -66,8 +189,43 @@ def _parse_firewall_rules(config: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     for rule_number, rule_cfg in sorted_rules:
         rule_details = ensure_mapping(rule_cfg)
-        src_addr, src_port = extract_rule_ports(ensure_mapping(rule_details.get("source")))
-        dst_addr, dst_port = extract_rule_ports(ensure_mapping(rule_details.get("destination")))
+        current_app.logger.debug(f"Parsing rule {rule_number}: {rule_details}")
+
+        # Check for add-address-to-group at rule level (for dynamic groups)
+        src_addr, src_port = "", ""
+        dst_addr, dst_port = "", ""
+
+        add_to_group_block = rule_details.get("add-address-to-group")
+        if isinstance(add_to_group_block, dict):
+            # Handle dynamic-group at rule level
+            src_addr_block = add_to_group_block.get("source-address")
+            if isinstance(src_addr_block, dict):
+                addr_group = src_addr_block.get("address-group")
+                if addr_group:
+                    group_name = flatten_value(addr_group)
+                    src_addr = f"[group:dynamic-group:{group_name}]"
+
+            dst_addr_block = add_to_group_block.get("destination-address")
+            if isinstance(dst_addr_block, dict):
+                addr_group = dst_addr_block.get("address-group")
+                if addr_group:
+                    group_name = flatten_value(addr_group)
+                    dst_addr = f"[group:dynamic-group:{group_name}]"
+
+        # Extract regular source/destination if not already set by add-address-to-group
+        if not src_addr:
+            src_addr, src_port = extract_rule_ports(ensure_mapping(rule_details.get("source")))
+        else:
+            # If src_addr was set by add-address-to-group, still need to extract port
+            _, src_port = extract_rule_ports(ensure_mapping(rule_details.get("source")))
+
+        if not dst_addr:
+            dst_addr, dst_port = extract_rule_ports(ensure_mapping(rule_details.get("destination")))
+        else:
+            # If dst_addr was set by add-address-to-group, still need to extract port
+            _, dst_port = extract_rule_ports(ensure_mapping(rule_details.get("destination")))
+
+        current_app.logger.debug(f"Rule {rule_number} - src_addr: {src_addr}, dst_addr: {dst_addr}")
         rule_entry = {
             "number": str(rule_number),
             "protocol": flatten_value(rule_details.get("protocol")) or "any",
@@ -180,6 +338,10 @@ def overview():
     initial_config = _load_firewall_name(initial_name) if initial_name else {}
     initial_metadata = metadata.get(initial_name, {}) if initial_name else {}
 
+    # Load firewall groups for use in rules
+    firewall_groups = _load_firewall_groups()
+    firewall_groups_details = _load_firewall_groups_details()
+
     context = {
         "firewall_names": firewall_names,
         "firewall_metadata": metadata,
@@ -191,6 +353,8 @@ def overview():
             "metadata": initial_metadata,
             "rules": _parse_firewall_rules(initial_config) if initial_name else [],
         },
+        "firewall_groups": firewall_groups,
+        "firewall_groups_details": firewall_groups_details,
         "active": "firewall",
         "active_subnav": "rules",
     }

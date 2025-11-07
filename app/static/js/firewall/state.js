@@ -17,6 +17,7 @@
     rules: [],
     rulesBaseline: [],
     orderDirty: false,
+    groupsDetails: {},
   };
 
   let modals = {};

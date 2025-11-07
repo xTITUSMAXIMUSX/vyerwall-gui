@@ -32,6 +32,7 @@ from app.modules.firewall import rules_bp, zone_bp
 from app.core import config_bp, is_config_dirty
 from app.modules.nat import nat_bp
 from app.modules.static_routes import static_routes_bp
+from app.modules.firewall_groups import firewall_groups_bp
 
 # Create Flask application
 app = Flask(
@@ -66,6 +67,7 @@ app.register_blueprint(zone_bp)
 app.register_blueprint(config_bp)
 app.register_blueprint(nat_bp)
 app.register_blueprint(static_routes_bp)
+app.register_blueprint(firewall_groups_bp)
 
 
 @app.route('/')

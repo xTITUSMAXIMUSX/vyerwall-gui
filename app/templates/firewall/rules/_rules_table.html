@@ -88,7 +88,7 @@
       <tbody id="firewallRulesBody" class="divide-y divide-gray-800/50">
         {% if initial_rules %}
           {% for rule in initial_rules %}
-            {{ rules_macros.rule_row(rule, action_meta) }}
+            {{ rules_macros.rule_row(rule, action_meta, firewall_groups_details) }}
           {% endfor %}
         {% else %}
           <tr>

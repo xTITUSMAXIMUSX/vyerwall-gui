@@ -71,6 +71,45 @@
     return encodeURIComponent(name);
   }
 
+  function formatGroupDisplay(value, groupsDetails) {
+    if (!value) {
+      return constants.labels.any || 'Any';
+    }
+
+    const valueStr = String(value).trim();
+
+    // Check if this is a group reference: [group:address-group:GROUP_NAME]
+    if (valueStr.startsWith('[group:') && valueStr.endsWith(']')) {
+      // Extract group type and name
+      const groupContent = valueStr.substring(7, valueStr.length - 1); // Remove [group: and ]
+      const parts = groupContent.split(':');
+
+      if (parts.length >= 2) {
+        const groupType = parts[0];
+        const groupName = parts.slice(1).join(':');
+        const lookupKey = `${groupType}:${groupName}`;
+
+        // Get members from groupsDetails
+        const members = (groupsDetails && groupsDetails[lookupKey]) || [];
+        const memberList = members.slice(0, 5).join(', ');
+        const moreCount = members.length - 5;
+        const tooltipText = memberList + (moreCount > 0 ? ` +${moreCount} more` : '');
+
+        // Return HTML for badge
+        return `<span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-500/20 border border-purple-500/40 rounded-md text-purple-300 text-xs font-medium cursor-help group-badge"
+                      data-group-type="${escapeHtml(groupType)}"
+                      data-group-name="${escapeHtml(groupName)}"
+                      data-tooltip="${escapeHtml(tooltipText)}">
+                  <span class="material-icons" style="font-size: 14px;">workspaces</span>
+                  <span>${escapeHtml(groupName)}</span>
+                </span>`;
+      }
+    }
+
+    // Not a group, return as-is or "Any" if empty
+    return isAnyValue(valueStr) ? (constants.labels.any || 'Any') : escapeHtml(valueStr);
+  }
+
   firewallNs.utils = {
     normalizeValue,
     isAnyValue,
@@ -82,5 +121,6 @@
     toggleButtonLoading,
     cloneRules,
     encodeName,
+    formatGroupDisplay,
   };
 })(window);

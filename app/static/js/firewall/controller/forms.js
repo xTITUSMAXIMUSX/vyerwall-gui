@@ -176,6 +176,155 @@
       protocolOverride: defaultPortProtocol,
       preserveInput: false,
     });
+
+    // Reset group toggles to manual entry
+    resetGroupToggles(form, '');
+  }
+
+  function setupGroupToggles(form, prefix = '') {
+    if (!form) return;
+
+    // Setup address toggles (source and destination)
+    ['source', 'destination'].forEach((kind) => {
+      const typeName = prefix ? `${prefix}${kind.charAt(0).toUpperCase()}${kind.slice(1)}AddressType` : `${kind}AddressType`;
+      const radios = form.querySelectorAll(`input[name="${typeName}"]`);
+
+      radios.forEach((radio) => {
+        radio.addEventListener('change', () => {
+          toggleAddressInput(form, kind, radio.value, prefix);
+        });
+      });
+
+      // Setup address group select change listener for timeout visibility
+      const groupAttr = prefix ? `${prefix}-${kind}-group` : `${kind}-group`;
+      const groupSelect = form.querySelector(`[data-address-input="${groupAttr}"]`);
+      if (groupSelect) {
+        groupSelect.addEventListener('change', () => {
+          updateTimeoutVisibility(form, kind, groupSelect, prefix);
+        });
+      }
+    });
+
+    // Setup port toggles (source and destination)
+    ['source', 'destination'].forEach((kind) => {
+      const typeName = prefix ? `${prefix}${kind.charAt(0).toUpperCase()}${kind.slice(1)}PortType` : `${kind}PortType`;
+      const radios = form.querySelectorAll(`input[name="${typeName}"]`);
+
+      radios.forEach((radio) => {
+        radio.addEventListener('change', () => {
+          togglePortInput(form, kind, radio.value, prefix);
+          // When switching to port group, ensure protocol is valid for ports
+          if (radio.value === 'group') {
+            ensureValidPortProtocol(form);
+          }
+        });
+      });
+    });
+
+    // Also listen to port group select changes to ensure protocol is valid
+    const portGroupSelects = form.querySelectorAll('select[name="sourcePortGroup"], select[name="destinationPortGroup"]');
+    portGroupSelects.forEach((select) => {
+      select.addEventListener('change', () => {
+        if (select.value) {
+          ensureValidPortProtocol(form);
+        }
+      });
+    });
+  }
+
+  function ensureValidPortProtocol(form) {
+    if (!form) return;
+    const protocolSelect = form.elements.protocol;
+    if (!protocolSelect) return;
+
+    const currentProtocol = (protocolSelect.value || '').toLowerCase();
+    // If current protocol is not valid for ports, set it to default (tcp_udp)
+    if (!allowedPortProtocols.includes(currentProtocol)) {
+      setProtocolValue(form, defaultPortProtocol, { force: true });
+    }
+  }
+
+  function toggleAddressInput(form, kind, type, prefix = '') {
+    const inputAttr = prefix ? `${prefix}-${kind}-manual` : `${kind}-manual`;
+    const groupAttr = prefix ? `${prefix}-${kind}-group` : `${kind}-group`;
+
+    const manualInput = form.querySelector(`[data-address-input="${inputAttr}"]`);
+    const groupSelect = form.querySelector(`[data-address-input="${groupAttr}"]`);
+
+    if (type === 'manual') {
+      if (manualInput) manualInput.classList.remove('hidden');
+      if (groupSelect) groupSelect.classList.add('hidden');
+      hideTimeoutContainer(form, kind, prefix);
+    } else {
+      if (manualInput) manualInput.classList.add('hidden');
+      if (groupSelect) groupSelect.classList.remove('hidden');
+      updateTimeoutVisibility(form, kind, groupSelect, prefix);
+    }
+  }
+
+  function hideTimeoutContainer(form, kind, prefix = '') {
+    const timeoutAttr = prefix ? `${prefix}-${kind}` : kind;
+    const timeoutContainer = form.querySelector(`[data-timeout-container="${timeoutAttr}"]`);
+    if (timeoutContainer) {
+      timeoutContainer.classList.add('hidden');
+    }
+  }
+
+  function updateTimeoutVisibility(form, kind, groupSelect, prefix = '') {
+    if (!groupSelect) return;
+
+    const timeoutAttr = prefix ? `${prefix}-${kind}` : kind;
+    const timeoutContainer = form.querySelector(`[data-timeout-container="${timeoutAttr}"]`);
+    if (!timeoutContainer) return;
+
+    const selectedValue = groupSelect.value || '';
+    const isDynamicGroup = selectedValue.startsWith('dynamic-group:');
+
+    if (isDynamicGroup) {
+      timeoutContainer.classList.remove('hidden');
+    } else {
+      timeoutContainer.classList.add('hidden');
+    }
+  }
+
+  function togglePortInput(form, kind, type, prefix = '') {
+    const containerAttr = prefix ? `${prefix}-${kind}-manual` : `${kind}-manual`;
+    const groupAttr = prefix ? `${prefix}-${kind}-group` : `${kind}-group`;
+
+    const manualContainer = form.querySelector(`[data-port-container="${containerAttr}"]`);
+    const groupSelect = form.querySelector(`[data-port-container="${groupAttr}"]`);
+
+    if (type === 'manual') {
+      if (manualContainer) manualContainer.classList.remove('hidden');
+      if (groupSelect) groupSelect.classList.add('hidden');
+    } else {
+      if (manualContainer) manualContainer.classList.add('hidden');
+      if (groupSelect) groupSelect.classList.remove('hidden');
+    }
+  }
+
+  function resetGroupToggles(form, prefix = '') {
+    if (!form) return;
+
+    // Reset to manual entry for addresses
+    ['source', 'destination'].forEach((kind) => {
+      const typeName = prefix ? `${prefix}${kind.charAt(0).toUpperCase()}${kind.slice(1)}AddressType` : `${kind}AddressType`;
+      const manualRadio = form.querySelector(`input[name="${typeName}"][value="manual"]`);
+      if (manualRadio) {
+        manualRadio.checked = true;
+        toggleAddressInput(form, kind, 'manual', prefix);
+      }
+    });
+
+    // Reset to manual entry for ports
+    ['source', 'destination'].forEach((kind) => {
+      const typeName = prefix ? `${prefix}${kind.charAt(0).toUpperCase()}${kind.slice(1)}PortType` : `${kind}PortType`;
+      const manualRadio = form.querySelector(`input[name="${typeName}"][value="manual"]`);
+      if (manualRadio) {
+        manualRadio.checked = true;
+        togglePortInput(form, kind, 'manual', prefix);
+      }
+    });
   }
 
   function serializeForm(form) {
@@ -187,6 +336,27 @@
     if (form.elements.disabled) {
       payload.disabled = form.elements.disabled.checked;
     }
+
+    // Handle group selections
+    // Check if using groups for addresses/ports and include that info in payload
+    const sourceAddressType = form.querySelector('input[name="sourceAddressType"]:checked, input[name="editSourceAddressType"]:checked');
+    const destinationAddressType = form.querySelector('input[name="destinationAddressType"]:checked, input[name="editDestinationAddressType"]:checked');
+    const sourcePortType = form.querySelector('input[name="sourcePortType"]:checked, input[name="editSourcePortType"]:checked');
+    const destinationPortType = form.querySelector('input[name="destinationPortType"]:checked, input[name="editDestinationPortType"]:checked');
+
+    if (sourceAddressType && sourceAddressType.value === 'group') {
+      payload.sourceAddressType = 'group';
+    }
+    if (destinationAddressType && destinationAddressType.value === 'group') {
+      payload.destinationAddressType = 'group';
+    }
+    if (sourcePortType && sourcePortType.value === 'group') {
+      payload.sourcePortType = 'group';
+    }
+    if (destinationPortType && destinationPortType.value === 'group') {
+      payload.destinationPortType = 'group';
+    }
+
     return payload;
   }
 
@@ -211,7 +381,15 @@
     });
     normalized.sourcePort = normalizePortList(normalized.sourcePort);
     normalized.destinationPort = normalizePortList(normalized.destinationPort);
-    const portsProvided = Boolean(normalized.sourcePort) || Boolean(normalized.destinationPort);
+
+    // Check if using port groups
+    const usingSourcePortGroup = normalized.sourcePortType === 'group' && normalized.sourcePortGroup;
+    const usingDestinationPortGroup = normalized.destinationPortType === 'group' && normalized.destinationPortGroup;
+
+    // Ports are provided if either manual ports or port groups are used
+    const portsProvided = Boolean(normalized.sourcePort) || Boolean(normalized.destinationPort) ||
+                          usingSourcePortGroup || usingDestinationPortGroup;
+
     if (portsProvided) {
       let proto = (normalized.protocol || '').toLowerCase();
       if (!allowedPortProtocols.includes(proto)) {
@@ -246,12 +424,89 @@
     }
 
     form.elements.description.value = rule.description || '';
-    form.elements.sourceAddress.value = isAnyValue(rule.source) ? '' : normalizeValue(rule.source);
+
+    // Handle source address (check for group syntax)
+    const sourceAddress = isAnyValue(rule.source) ? '' : normalizeValue(rule.source);
+    if (sourceAddress.startsWith('[group:')) {
+      // Extract group type and name from format: [group:address-group:GROUP_NAME]
+      const match = sourceAddress.match(/\[group:(address-group|network-group):(.+)\]/);
+      if (match) {
+        const groupType = match[1];
+        const groupName = match[2];
+        const groupRadio = form.querySelector('input[name="editSourceAddressType"][value="group"]');
+        if (groupRadio) {
+          groupRadio.checked = true;
+          toggleAddressInput(form, 'source', 'group', 'edit');
+          const groupSelect = form.elements.sourceAddressGroup;
+          if (groupSelect) {
+            groupSelect.value = `${groupType}:${groupName}`;
+          }
+        }
+      }
+    } else {
+      form.elements.sourceAddress.value = sourceAddress;
+    }
+
+    // Handle source port (check for group syntax)
     const sourcePortValue = isAnyValue(rule.source_port) ? '' : normalizeValue(rule.source_port);
-    form.elements.sourcePort.value = sourcePortValue;
-    form.elements.destinationAddress.value = isAnyValue(rule.destination) ? '' : normalizeValue(rule.destination);
+    if (sourcePortValue.startsWith('[group:port-group:')) {
+      const match = sourcePortValue.match(/\[group:port-group:(.+)\]/);
+      if (match) {
+        const groupName = match[1];
+        const groupRadio = form.querySelector('input[name="editSourcePortType"][value="group"]');
+        if (groupRadio) {
+          groupRadio.checked = true;
+          togglePortInput(form, 'source', 'group', 'edit');
+          const groupSelect = form.elements.sourcePortGroup;
+          if (groupSelect) {
+            groupSelect.value = groupName;
+          }
+        }
+      }
+    } else {
+      form.elements.sourcePort.value = sourcePortValue;
+    }
+
+    // Handle destination address (check for group syntax)
+    const destinationAddress = isAnyValue(rule.destination) ? '' : normalizeValue(rule.destination);
+    if (destinationAddress.startsWith('[group:')) {
+      const match = destinationAddress.match(/\[group:(address-group|network-group):(.+)\]/);
+      if (match) {
+        const groupType = match[1];
+        const groupName = match[2];
+        const groupRadio = form.querySelector('input[name="editDestinationAddressType"][value="group"]');
+        if (groupRadio) {
+          groupRadio.checked = true;
+          toggleAddressInput(form, 'destination', 'group', 'edit');
+          const groupSelect = form.elements.destinationAddressGroup;
+          if (groupSelect) {
+            groupSelect.value = `${groupType}:${groupName}`;
+          }
+        }
+      }
+    } else {
+      form.elements.destinationAddress.value = destinationAddress;
+    }
+
+    // Handle destination port (check for group syntax)
     const destinationPortValue = isAnyValue(rule.destination_port) ? '' : normalizeValue(rule.destination_port);
-    form.elements.destinationPort.value = destinationPortValue;
+    if (destinationPortValue.startsWith('[group:port-group:')) {
+      const match = destinationPortValue.match(/\[group:port-group:(.+)\]/);
+      if (match) {
+        const groupName = match[1];
+        const groupRadio = form.querySelector('input[name="editDestinationPortType"][value="group"]');
+        if (groupRadio) {
+          groupRadio.checked = true;
+          togglePortInput(form, 'destination', 'group', 'edit');
+          const groupSelect = form.elements.destinationPortGroup;
+          if (groupSelect) {
+            groupSelect.value = groupName;
+          }
+        }
+      }
+    } else {
+      form.elements.destinationPort.value = destinationPortValue;
+    }
     // Handle toggle button for disabled state
     const disabledToggle = document.getElementById('editRuleDisabledToggle');
     const disabledHidden = document.getElementById('editRuleDisabled');
@@ -297,5 +552,7 @@
     applyPresetForRule,
     setupPortPresets,
     setProtocolValue,
+    setupGroupToggles,
+    resetGroupToggles,
   };
 })(window);

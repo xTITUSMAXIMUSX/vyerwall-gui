@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block title %}Firewall Groups{% endblock %}
+{% set active = 'firewall_groups' %}
+
+{% block header %}
+<div class="flex items-center gap-3 mb-2">
+  <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+    <span class="material-icons text-white text-2xl">workspaces</span>
+  </div>
+  <div>
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+      Firewall Groups
+    </h1>
+    <p class="text-gray-400 text-sm">Manage firewall object groups for use in firewall rules</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Create Group Button -->
+  <div class="flex justify-end">
+    <button onclick="openCreateGroupModal()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+      <span class="material-icons">add</span>
+      <span>Create Group</span>
+    </button>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-xl p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-400 text-sm font-medium">Total Groups</p>
+          <p class="text-3xl font-bold text-white mt-1">{{ stats.total }}</p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-purple-400 text-2xl">folder_open</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-xl p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-400 text-sm font-medium">Network Groups</p>
+          <p class="text-3xl font-bold text-white mt-1">{{ stats.by_type.get('network-group', 0) + stats.by_type.get('address-group', 0) }}</p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-blue-400 text-2xl">cloud</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-xl p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-400 text-sm font-medium">Port Groups</p>
+          <p class="text-3xl font-bold text-white mt-1">{{ stats.by_type.get('port-group', 0) }}</p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-purple-400 text-2xl">power</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-xl p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-400 text-sm font-medium">Interface Groups</p>
+          <p class="text-3xl font-bold text-white mt-1">{{ stats.by_type.get('interface-group', 0) }}</p>
+        </div>
+        <div class="w-12 h-12 bg-gradient-to-br from-teal-500/20 to-teal-600/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-teal-400 text-2xl">settings_ethernet</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group Type Tabs -->
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden">
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-700/50 bg-gray-800/50">
+      <div class="flex overflow-x-auto custom-scrollbar">
+        {% for group_type, config in group_types.items() %}
+        <button
+          class="group-type-tab px-6 py-4 text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2"
+          data-type="{{ group_type }}"
+          onclick="switchGroupType('{{ group_type }}')">
+          <span class="material-icons text-lg">{{ config.icon }}</span>
+          <span>{{ config.display_name }}</span>
+          <span class="ml-2 px-2 py-0.5 bg-gray-700 text-gray-300 rounded-full text-xs">{{ groups_by_type.get(group_type, [])|length }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="p-6">
+      {% for group_type, groups in groups_by_type.items() %}
+      <div id="tab-{{ group_type }}" class="group-type-content hidden">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-xl font-bold text-white">{{ group_types[group_type].display_name }}</h3>
+            <p class="text-sm text-gray-400 mt-1">{{ group_types[group_type].description }}</p>
+          </div>
+          <button onclick="openCreateGroupModal('{{ group_type }}')" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2 text-sm">
+            <span class="material-icons text-sm">add</span>
+            <span>Add {{ group_types[group_type].display_name }}</span>
+          </button>
+        </div>
+
+        {% if groups %}
+        <div class="grid grid-cols-1 gap-4">
+          {% for group in groups %}
+          <div class="bg-gray-700/30 border border-gray-600/50 rounded-lg p-4 hover:bg-gray-700/50 transition-all">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="material-icons text-purple-400">{{ group_types[group_type].icon }}</span>
+                  <h4 class="text-lg font-semibold text-white">{{ group.name }}</h4>
+                  <span class="px-2 py-1 bg-gray-600/50 text-gray-300 rounded-md text-xs font-medium">{{ group.member_count }} member{% if group.member_count != 1 %}s{% endif %}</span>
+                </div>
+                {% if group.description %}
+                <p class="text-sm text-gray-400 mb-3">{{ group.description }}</p>
+                {% endif %}
+                <div class="flex flex-wrap gap-2">
+                  {% for member in group.members[:10] %}
+                  <span class="px-3 py-1 bg-gray-600/30 text-gray-300 rounded-md text-sm font-mono">{{ member }}</span>
+                  {% endfor %}
+                  {% if group.members|length > 10 %}
+                  <span class="px-3 py-1 bg-gray-600/30 text-gray-400 rounded-md text-sm">+{{ group.members|length - 10 }} more</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="flex gap-2 ml-4">
+                <button onclick='editGroup({{ group|tojson }})' class="p-2 hover:bg-gray-600/50 rounded-lg transition-colors" title="Edit">
+                  <span class="material-icons text-blue-400">edit</span>
+                </button>
+                <button onclick='deleteGroup("{{ group_type }}", "{{ group.name }}")' class="p-2 hover:bg-gray-600/50 rounded-lg transition-colors" title="Delete">
+                  <span class="material-icons text-red-400">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+          <span class="material-icons text-gray-600 text-6xl">{{ group_types[group_type].icon }}</span>
+          <p class="text-gray-400 mt-4">No {{ group_types[group_type].display_name }}s created yet</p>
+          <button onclick="openCreateGroupModal('{{ group_type }}')" class="mt-4 text-purple-400 hover:text-purple-300 font-medium">
+            Create your first {{ group_types[group_type].display_name }}
+          </button>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Group Modal -->
+<div id="groupModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+  <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl shadow-2xl max-w-3xl w-full transform transition-all">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-700/50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center">
+          <span class="material-icons text-purple-400" id="modalIcon">add</span>
+        </div>
+        <div>
+          <h3 id="modalTitle" class="text-xl font-bold text-white">Create Firewall Group</h3>
+          <p class="text-sm text-gray-400" id="modalSubtitle">Add a new firewall object group</p>
+        </div>
+      </div>
+      <button onclick="closeGroupModal()" class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700/50 rounded-lg">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <!-- Modal Form -->
+    <form id="groupForm" class="p-6 space-y-4">
+      <input type="hidden" id="isEditing" value="false">
+      <input type="hidden" id="originalName" value="">
+
+      <!-- Group Type Selection (only shown when creating) -->
+      <div id="typeSelectionContainer">
+        <label class="block text-sm font-medium text-gray-300 mb-2">Group Type *</label>
+        <select id="groupType" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" onchange="updateGroupTypeUI()" required>
+          <option value="">Select group type</option>
+          {% for group_type, config in group_types.items() %}
+          <option value="{{ group_type }}">{{ config.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4">
+        <!-- Group Name -->
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Group Name *</label>
+          <input type="text" id="groupName" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="e.g., my_servers" required>
+          <p class="text-xs text-gray-500 mt-1">Must start with a letter, contain only letters, numbers, dashes, and underscores</p>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+          <input type="text" id="groupDescription" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="e.g., Production web servers">
+        </div>
+
+        <!-- Members -->
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            <span id="memberLabel">Members</span> *
+          </label>
+          <div class="space-y-2" id="membersContainer">
+            <div class="flex gap-2 member-input-row">
+              <input type="text" class="member-input flex-1 bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" placeholder="Enter member value">
+              <button type="button" onclick="removeMember(this)" class="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors">
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </div>
+          <button type="button" onclick="addMemberInput()" class="mt-2 text-purple-400 hover:text-purple-300 font-medium text-sm flex items-center gap-1">
+            <span class="material-icons text-sm">add</span>
+            <span>Add another member</span>
+          </button>
+          <p class="text-xs text-gray-500 mt-2" id="memberHint">Enter one or more members</p>
+        </div>
+      </div>
+    </form>
+
+    <!-- Modal Actions -->
+    <div class="flex gap-3 p-6 border-t border-gray-700/50">
+      <button onclick="closeGroupModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-all">
+        Cancel
+      </button>
+      <button onclick="saveGroup()" id="saveGroupBtn" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+        <span class="material-icons text-sm animate-spin hidden" id="saveGroupSpinner">refresh</span>
+        <span class="material-icons text-sm" id="saveGroupIcon">save</span>
+        <span id="saveGroupBtnText">Create Group</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/firewall_groups.js') }}"></script>
+<script>
+// Pass group types config to JavaScript
+window.GROUP_TYPES = {{ group_types|tojson }};
+
+// Initialize with saved tab or first tab
+document.addEventListener('DOMContentLoaded', function() {
+  const groupTypes = {{ group_types|tojson }};
+  const savedTab = localStorage.getItem('firewall_groups_active_tab');
+
+  // Use saved tab if it exists and is valid, otherwise use first tab
+  let initialTab = Object.keys(groupTypes)[0];
+  if (savedTab && groupTypes[savedTab]) {
+    initialTab = savedTab;
+  }
+
+  switchGroupType(initialTab);
+});
+</script>
+{% endblock %}
